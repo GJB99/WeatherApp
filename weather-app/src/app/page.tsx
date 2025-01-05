@@ -55,67 +55,69 @@ export default function Home() {
   if (!weatherData) return null
 
   return (
-    <main className={`min-h-screen ${getBackgroundColor(weatherData.condition)} text-white flex flex-col items-center pt-8`}>
+    <main className={`min-h-screen ${getBackgroundColor(weatherData.condition)} text-white flex flex-col items-center px-4 pt-8`}>
       {/* Location and Date */}
-      <div className="w-full px-6 mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MapPinIcon className="h-5 w-5" />
-            <p className="text-sm">{weatherData.location}</p>
-          </div>
-          <p className="text-sm">{weatherData.currentDate}</p>
+      <div className="w-full max-w-md flex items-center justify-between mb-12">
+        <div className="flex items-center gap-2">
+          <MapPinIcon className="h-5 w-5" />
+          <p className="text-base">{weatherData.location}</p>
         </div>
+        <p className="text-sm opacity-80">{weatherData.currentDate}</p>
       </div>
 
       {/* Current Temperature */}
-      <div className="text-center mb-8">
-        <h1 className="text-[120px] font-light leading-none">{Math.round(weatherData.temperature)}°C</h1>
-        <div className="inline-block bg-white/20 px-4 py-1 rounded-full">
-          <p className="text-sm font-light">{weatherData.condition}</p>
+      <div className="text-center mb-12">
+        <h1 className="text-[156px] font-extralight leading-none mb-4">{Math.round(weatherData.temperature)}°</h1>
+        <div className="inline-block bg-white/20 px-6 py-2 rounded-full">
+          <p className="text-base font-light capitalize">{weatherData.condition}</p>
         </div>
       </div>
 
-      {/* Today's Forecast */}
-      <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-4 w-[90%] max-w-md mb-4">
-        <div className="grid grid-cols-4 gap-4">
-          <div className="text-center">
-            <p className="text-sm opacity-80">Today</p>
-            <p className="text-sm">↑{Math.round(weatherData.todayForecast.high)}° ↓{Math.round(weatherData.todayForecast.low)}°</p>
+      {/* Today's Stats */}
+      <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mb-6">
+        <div className="grid grid-cols-3 gap-6">
+          <div className="text-center border-r border-white/20">
+            <p className="text-sm opacity-80 mb-1">Today</p>
+            <p className="text-sm font-light">
+              ↑{Math.round(weatherData.todayForecast.high)}° ↓{Math.round(weatherData.todayForecast.low)}°
+            </p>
           </div>
-          <div className="text-center col-span-2">
-            <p className="text-sm opacity-80">{weatherData.details.time}</p>
-            <p className="text-sm">{weatherData.details.windSpeed}km/h</p>
+          <div className="text-center border-r border-white/20">
+            <p className="text-sm opacity-80 mb-1">{weatherData.details.time}</p>
+            <p className="text-sm font-light">{weatherData.details.windSpeed} km/h</p>
           </div>
           <div className="text-center">
-            <p className="text-sm opacity-80">UV {weatherData.details.uvIndex}</p>
-            <p className="text-sm">{getRainDescription(weatherData.details.rainChance)}</p>
+            <p className="text-sm opacity-80 mb-1">UV {weatherData.details.uvIndex}</p>
+            <p className="text-sm font-light">{getRainDescription(weatherData.details.rainChance)}</p>
           </div>
         </div>
       </div>
 
       {/* Hourly Forecast */}
-      <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-[90%] max-w-md mb-4">
-        <h2 className="text-lg font-medium mb-4">Hourly Forecast</h2>
-        <div className="grid grid-cols-4 gap-6">
+      <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mb-6">
+        <h2 className="text-lg font-medium mb-6">Hourly Forecast</h2>
+        <div className="grid grid-cols-4 gap-8">
           {weatherData.hourlyForecast.map((hour, index) => (
             <div key={index} className="text-center">
-              <p className="text-sm mb-2">{hour.time}</p>
+              <p className="text-sm mb-3 opacity-80">{hour.time}</p>
               {getWeatherIcon(hour.condition)}
-              <p className="text-lg mt-2">{Math.round(hour.temperature)}°</p>
+              <p className="text-lg font-light mt-3">{Math.round(hour.temperature)}°</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* Tomorrow's Forecast */}
-      <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-4 w-[90%] max-w-md">
+      <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-medium">Tomorrow</h3>
+            <h3 className="text-lg font-medium mb-1">Tomorrow</h3>
             <p className="text-sm opacity-80">{weatherData.tomorrowForecast.description}</p>
           </div>
           <div className="text-right">
-            <p className="text-sm">↑{Math.round(weatherData.tomorrowForecast.high)}° ↓{Math.round(weatherData.tomorrowForecast.low)}°</p>
+            <p className="text-sm font-light">
+              ↑{Math.round(weatherData.tomorrowForecast.high)}° ↓{Math.round(weatherData.tomorrowForecast.low)}°
+            </p>
           </div>
         </div>
       </div>
