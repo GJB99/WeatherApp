@@ -27,7 +27,7 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
 
     // Get weather data for today and tomorrow
     const response = await axios.get(
-      `${WEATHER_BASE_URL}/${latitude},${longitude}/next2days?unitGroup=metric&include=current,hours,days&key=${WEATHER_API_KEY}`
+      `${WEATHER_BASE_URL}/${latitude},${longitude}/next7days?unitGroup=metric&include=current,hours,days&key=${WEATHER_API_KEY}`
     );
 
     const current = response.data.currentConditions;
@@ -53,9 +53,12 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
 
     return {
       temperature: current.temp,
+      feelslike: current.feelslike,
       condition: mapWeatherCondition(current.conditions, current.temp),
       location: cityName,
       currentDate: currentDate,
+      sunrise: current.sunrise,
+      sunset: current.sunset,
       todayForecast: {
         high: today.tempmax,
         low: today.tempmin
@@ -64,7 +67,8 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
         time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
         windSpeed: Math.round(current.windspeed),
         uvIndex: current.uvindex,
-        rainChance: today.precipprob || 0
+        rainChance: today.precipprob || 0,
+        humidity: current.humidity
       },
       tomorrowForecast: {
         high: tomorrow.tempmax,
@@ -79,6 +83,16 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
         }),
         temperature: hour.temp,
         condition: mapWeatherCondition(hour.conditions, hour.temp)
+      })),
+      dailyForecast: response.data.days.slice(1, 8).map((day: any) => ({
+        date: new Date(day.datetimeEpoch * 1000).toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric'
+        }),
+        high: day.tempmax,
+        low: day.tempmin,
+        condition: mapWeatherCondition(day.conditions)
       }))
     };
   } catch (error: any) {

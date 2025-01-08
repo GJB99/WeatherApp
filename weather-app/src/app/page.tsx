@@ -70,6 +70,13 @@ export default function Home() {
     }
   }
 
+  function getWindDescription(speed: number): string {
+    if (speed < 5) return 'Light breeze'
+    if (speed < 15) return 'Moderate wind'
+    if (speed < 25) return 'Strong wind'
+    return 'High wind'
+  }
+
   const saveCurrentLocation = (location?: { name: string; lat: number; lon: number }) => {
     const locationToSave = location || {
       name: weatherData?.location || '',
@@ -220,6 +227,7 @@ export default function Home() {
       {/* Current Temperature */}
       <div className="text-center mb-12">
         <h1 className="text-[156px] font-extralight leading-none mb-4">{Math.round(weatherData.temperature)}°</h1>
+        <p className="text-sm opacity-80 mb-2">Feels like {Math.round(weatherData.feelslike)}°</p>
         <div className="inline-block bg-white/20 px-6 py-2 rounded-full">
           <p className={`text-base capitalize ${getConditionTextColor(weatherData.condition)}`}>
             {weatherData.condition}
@@ -229,20 +237,48 @@ export default function Home() {
 
       {/* Today's Stats */}
       <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mb-6">
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 gap-6 mb-6">
           <div className="text-center border-r border-white/20">
             <p className="text-sm opacity-80 mb-1">Today</p>
             <p className="text-sm font-light">
               ↑{Math.round(weatherData.todayForecast.high)}° ↓{Math.round(weatherData.todayForecast.low)}°
             </p>
           </div>
+          <div className="text-center">
+            <p className="text-sm opacity-80 mb-1">Humidity</p>
+            <p className="text-sm font-light">{weatherData.details.humidity}%</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-6 mb-6">
           <div className="text-center border-r border-white/20">
-            <p className="text-sm opacity-80 mb-1">{weatherData.details.time}</p>
-            <p className="text-sm font-light">{weatherData.details.windSpeed} km/h</p>
+            <p className="text-sm opacity-80 mb-1">Wind</p>
+            <p className="text-sm font-light">
+              {getWindDescription(weatherData.details.windSpeed)}
+              <br />
+              {weatherData.details.windSpeed} km/h
+            </p>
           </div>
           <div className="text-center">
-            <p className="text-sm opacity-80 mb-1">UV {weatherData.details.uvIndex}</p>
+            <p className="text-sm opacity-80 mb-1">UV Index</p>
+            <p className={`text-sm font-light ${getUVColor(weatherData.details.uvIndex)}`}>
+              {weatherData.details.uvIndex} - {getUVDescription(weatherData.details.uvIndex)}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-6">
+          <div className="text-center border-r border-white/20">
+            <p className="text-sm opacity-80 mb-1">Rain</p>
             <p className="text-sm font-light">{getRainDescription(weatherData.details.rainChance)}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm opacity-80 mb-1">Sun</p>
+            <p className="text-sm font-light">
+              ↑{weatherData.sunrise}
+              <br />
+              ↓{weatherData.sunset}
+            </p>
           </div>
         </div>
       </div>
@@ -275,6 +311,27 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Daily Forecast */}
+      {weatherData.dailyForecast && (
+        <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mt-6">
+          <h2 className="text-lg font-medium mb-6">7-Day Forecast</h2>
+          <div className="space-y-4">
+            {weatherData.dailyForecast.map((day, index) => (
+              <div key={index} className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <p className="text-sm w-24">{day.date}</p>
+                  {getWeatherIcon(day.condition)}
+                </div>
+                <div className="flex gap-4">
+                  <p className="text-sm font-light">↑{Math.round(day.high)}°</p>
+                  <p className="text-sm font-light opacity-75">↓{Math.round(day.low)}°</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </main>
   )
 }
@@ -283,7 +340,7 @@ function getConditionTextColor(condition: string) {
   switch (condition.toLowerCase()) {
     case 'sunny': return 'text-[#FFB067] font-bold'
     case 'rainy': return 'text-[#4B95E9] font-bold'
-    case 'cloudy': return 'text-[#718096] font-bold'
+    case 'cloudy': return 'text-[#94A3B8] font-bold'
     case 'windy': return 'text-[#718096] font-bold'
     default: return 'text-white font-bold'
   }
@@ -326,4 +383,20 @@ function areLocationsEqual(loc1: SavedLocation, loc2: SavedLocation): boolean {
   const distance = R * c;
   
   return distance < 5; // Returns true if locations are within 5km
+}
+
+function getUVDescription(uvIndex: number): string {
+  if (uvIndex <= 2) return 'Low'
+  if (uvIndex <= 5) return 'Moderate'
+  if (uvIndex <= 7) return 'High'
+  if (uvIndex <= 10) return 'Very High'
+  return 'Extreme'
+}
+
+function getUVColor(uvIndex: number): string {
+  if (uvIndex <= 2) return 'text-green-400'
+  if (uvIndex <= 5) return 'text-yellow-400'
+  if (uvIndex <= 7) return 'text-orange-400'
+  if (uvIndex <= 10) return 'text-red-400'
+  return 'text-purple-400'
 }

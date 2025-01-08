@@ -1,8 +1,11 @@
 export interface WeatherData {
   temperature: number;
+  feelslike: number;
   condition: WeatherCondition;
   location: string;
   currentDate: string;
+  sunrise: string;
+  sunset: string;
   todayForecast: {
     high: number;
     low: number;
@@ -12,6 +15,7 @@ export interface WeatherData {
     windSpeed: number;
     uvIndex: number;
     rainChance: number;
+    humidity: number;
   };
   tomorrowForecast: {
     high: number;
@@ -20,11 +24,19 @@ export interface WeatherData {
     condition: WeatherCondition;
   };
   hourlyForecast: HourlyForecast[];
+  dailyForecast: DailyForecast[];
 }
 
 export interface HourlyForecast {
   time: string;
   temperature: number;
+  condition: WeatherCondition;
+}
+
+export interface DailyForecast {
+  date: string;
+  high: number;
+  low: number;
   condition: WeatherCondition;
 }
 
