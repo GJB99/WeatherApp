@@ -10,12 +10,20 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
       throw new Error('Visual Crossing API key is not configured');
     }
 
-    // Get location name using reverse geocoding
+    // Get location name using OpenStreetMap's Nominatim
     const locationResponse = await axios.get(
-      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+      `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=10`,
+      {
+        headers: {
+          'User-Agent': 'WeatherApp/1.0'
+        }
+      }
     );
 
-    const cityName = `${locationResponse.data.city || locationResponse.data.locality}, ${locationResponse.data.countryCode}`;
+    // Extract city and country from address components
+    const address = locationResponse.data.address;
+    const city = address.city || address.town || address.village || address.suburb || address.municipality;
+    const cityName = `${city}, ${address.country_code.toUpperCase()}`;
 
     // Get weather data for today and tomorrow
     const response = await axios.get(
@@ -45,7 +53,7 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
 
     return {
       temperature: current.temp,
-      condition: mapWeatherCondition(current.conditions),
+      condition: mapWeatherCondition(current.conditions, current.temp),
       location: cityName,
       currentDate: currentDate,
       todayForecast: {
@@ -70,7 +78,7 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
           hour12: true
         }),
         temperature: hour.temp,
-        condition: mapWeatherCondition(hour.conditions)
+        condition: mapWeatherCondition(hour.conditions, hour.temp)
       }))
     };
   } catch (error: any) {
@@ -79,8 +87,9 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
   }
 }
 
-function mapWeatherCondition(condition: string): WeatherData['condition'] {
+function mapWeatherCondition(condition: string, temperature?: number): WeatherData['condition'] {
   const conditions = condition?.toLowerCase() || '';
+
   if (conditions.includes('clear') || conditions.includes('sun')) return 'sunny';
   if (conditions.includes('rain') || conditions.includes('drizzle') || conditions.includes('thunder')) return 'rainy';
   if (conditions.includes('snow') || conditions.includes('ice') || conditions.includes('sleet')) return 'icy';
