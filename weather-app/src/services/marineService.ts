@@ -4,8 +4,22 @@ const WEATHERAPI_KEY = process.env.NEXT_PUBLIC_WEATHERAPI_API_KEY;
 
 export async function fetchMarineData(lat: number, lon: number) {
   try {
+    // First, find the nearest coastal location
+    const coastalResponse = await axios.get(
+      `http://api.weatherapi.com/v1/search.json?key=${WEATHERAPI_KEY}&q=${lat},${lon}`
+    );
+
+    // Filter for coastal locations and get the nearest one
+    const coastalLocation = coastalResponse.data.find((loc: any) => 
+      loc.country === 'Netherlands' && ['Beach'].some(term => 
+        loc.name.toLowerCase().includes(term) || 
+        loc.region.toLowerCase().includes(term)
+      )
+    ) || coastalResponse.data[0]; // Fallback to first result if no coastal location found
+
+    // Get marine data for the coastal location
     const response = await axios.get(
-      `http://api.weatherapi.com/v1/marine.json?key=${WEATHERAPI_KEY}&q=${lat},${lon}&days=1`
+      `http://api.weatherapi.com/v1/marine.json?key=${WEATHERAPI_KEY}&q=${coastalLocation.lat},${coastalLocation.lon}&days=1`
     );
 
     const currentHour = response.data.forecast.forecastday[0].hour.find((h: any) => {
@@ -14,7 +28,6 @@ export async function fetchMarineData(lat: number, lon: number) {
       return hourTime === currentTime;
     });
 
-    // Get tides data directly from the forecast
     const tidesData = response.data.forecast.forecastday[0].day.tides[0].tide;
     let tides = [];
 
@@ -32,7 +45,7 @@ export async function fetchMarineData(lat: number, lon: number) {
 
     return {
       temperature: Math.round(currentHour.water_temp_c),
-      location: 'Nearest coast',
+      location: coastalLocation.name,
       tides: tides
     };
   } catch (error) {

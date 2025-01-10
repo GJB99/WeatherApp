@@ -332,7 +332,7 @@ export default function Home() {
 
         <div className="grid grid-cols-2 gap-6 mb-6">
           <div className="text-center border-r border-white/20">
-            <p className="text-sm opacity-80 mb-1">Sea Temperature</p>
+            <p className="text-sm opacity-80 mb-1">Water Temperature</p>
             {weatherData.seaData ? (
               <div className="text-sm font-light">
                 <p>{Math.round(weatherData.seaData.temperature)}°</p>
@@ -345,12 +345,14 @@ export default function Home() {
           <div className="text-center">
             <p className="text-sm opacity-80 mb-1">Tides</p>
             {weatherData.seaData?.tides ? (
-              <div className="text-sm font-light">
+              <div className="text-sm font-light flex flex-col items-center">
                 {weatherData.seaData.tides.slice(0, 2).map((tide, index) => (
-                  <p key={index} className="flex items-center justify-center gap-1">
-                    <span>{tide.type === 'high' ? '↑' : '↓'}</span>
+                  <div key={index} className="flex items-center gap-1">
+                    <span className={tide.type === 'high' ? 'text-blue-300' : 'text-blue-500'}>
+                      {tide.type === 'high' ? 'High' : 'Low'}
+                    </span>
                     <span>{tide.time}</span>
-                  </p>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -376,9 +378,15 @@ export default function Home() {
           </div>
           <div className="text-center">
             <p className="text-sm opacity-80 mb-1">Sun</p>
-            <div className="text-sm font-light">
-              <p>↑ {weatherData.sunrise.split(':').slice(0, 2).join(':')}</p>
-              <p>↓ {weatherData.sunset.split(':').slice(0, 2).join(':')}</p>
+            <div className="text-sm font-light flex flex-col items-center">
+              <div className="flex items-center gap-1">
+                <span className="text-orange-300">Rise</span>
+                <span>{weatherData.sunrise}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-orange-500">Set</span>
+                <span>{weatherData.sunset}</span>
+              </div>
             </div>
           </div>
         </div>
