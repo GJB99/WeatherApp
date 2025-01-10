@@ -6,6 +6,10 @@ export interface WeatherData {
   currentDate: string;
   sunrise: string;
   sunset: string;
+  coordinates: {
+    lat: number;
+    lon: number;
+  };
   todayForecast: {
     high: number;
     low: number;

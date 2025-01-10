@@ -56,6 +56,10 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
       feelslike: current.feelslike,
       condition: mapWeatherCondition(current.conditions, current.temp),
       location: cityName,
+      coordinates: {
+        lat: latitude,
+        lon: longitude
+      },
       currentDate: currentDate,
       sunrise: current.sunrise,
       sunset: current.sunset,

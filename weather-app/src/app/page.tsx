@@ -1,9 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { MapPinIcon, SunIcon, CloudIcon, CloudArrowDownIcon, ArrowPathIcon, Bars3Icon, PlusIcon, MinusCircleIcon } from '@heroicons/react/24/solid'
+import { MapPinIcon, SunIcon, CloudIcon, CloudArrowDownIcon, ArrowPathIcon, Bars3Icon, PlusIcon, MinusCircleIcon, MapIcon } from '@heroicons/react/24/solid'
 import { fetchWeatherData } from '@/services/weatherService'
 import type { WeatherData, WeatherCondition } from '@/types/weather'
 import LocationSearch from './LocationSearch'
+import MapSelector from './MapSelector'
 
 interface SavedLocation {
   name: string;
@@ -23,6 +24,7 @@ export default function Home() {
     }
     return []
   })
+  const [isMapOpen, setIsMapOpen] = useState(false)
 
   useEffect(() => {
     const getWeatherData = async () => {
@@ -84,29 +86,36 @@ export default function Home() {
       lon: 0
     }
 
-    if (location || (weatherData && navigator.geolocation)) {
-      const saveLocation = () => {
-        // Check if location already exists
+    if (location) {
+      // For manually selected locations (map or search)
+      const exists = savedLocations.some(
+        loc => loc.name === locationToSave.name || areLocationsEqual(loc, locationToSave)
+      )
+
+      if (!exists) {
+        const updatedLocations = [...savedLocations, locationToSave]
+        setSavedLocations(updatedLocations)
+        localStorage.setItem('savedLocations', JSON.stringify(updatedLocations))
+      }
+    } else if (weatherData) {
+      // For current location
+      navigator.geolocation.getCurrentPosition((position) => {
+        const currentLocation = {
+          name: weatherData.location,
+          lat: position.coords.latitude,
+          lon: position.coords.longitude
+        }
+
         const exists = savedLocations.some(
-          loc => loc.name === locationToSave.name || areLocationsEqual(loc, locationToSave)
+          loc => loc.name === currentLocation.name || areLocationsEqual(loc, currentLocation)
         )
 
         if (!exists) {
-          const updatedLocations = [...savedLocations, locationToSave]
+          const updatedLocations = [...savedLocations, currentLocation]
           setSavedLocations(updatedLocations)
           localStorage.setItem('savedLocations', JSON.stringify(updatedLocations))
         }
-      }
-
-      if (location) {
-        saveLocation()
-      } else {
-        navigator.geolocation.getCurrentPosition((position) => {
-          locationToSave.lat = position.coords.latitude
-          locationToSave.lon = position.coords.longitude
-          saveLocation()
-        })
-      }
+      })
     }
   }
 
@@ -158,6 +167,11 @@ export default function Home() {
                         position.coords.longitude
                       )
                       setWeatherData(data)
+                      saveCurrentLocation({
+                        name: data.location,
+                        lat: position.coords.latitude,
+                        lon: position.coords.longitude
+                      })
                       setIsMenuOpen(false)
                     } catch (err) {
                       setError('Failed to fetch weather data')
@@ -173,6 +187,14 @@ export default function Home() {
           >
             <MapPinIcon className="h-4 w-4" />
             <span>Current Location</span>
+          </button>
+
+          <button
+            onClick={() => setIsMapOpen(true)}
+            className="w-full flex items-center gap-2 p-2 mb-4 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+          >
+            <MapIcon className="h-4 w-4" />
+            <span>Select on Map</span>
           </button>
 
           <div className="mb-4">
@@ -213,7 +235,16 @@ export default function Home() {
             </button>
           ) : (
             <button 
-              onClick={() => saveCurrentLocation()}
+              onClick={() => {
+                if (weatherData) {
+                  const locationToSave = {
+                    name: weatherData.location,
+                    lat: weatherData.coordinates.lat,
+                    lon: weatherData.coordinates.lon
+                  };
+                  saveCurrentLocation(locationToSave);
+                }
+              }}
               className="ml-2 p-1 hover:bg-white/10 rounded-full transition-colors"
               title="Save this location"
             >
@@ -333,6 +364,25 @@ export default function Home() {
             ))}
           </div>
         </div>
+      )}
+
+      {isMapOpen && (
+        <MapSelector
+          isOpen={isMapOpen}
+          onClose={() => setIsMapOpen(false)}
+          defaultCenter={weatherData ? [weatherData.coordinates.lat, weatherData.coordinates.lon] : undefined}
+          onLocationSelect={async (location) => {
+            const data = await fetchWeatherData(location.lat, location.lon)
+            const locationData = {
+              name: data.location,
+              lat: location.lat,
+              lon: location.lon
+            }
+            await loadLocation(locationData)
+            saveCurrentLocation(locationData)
+            setIsMapOpen(false)
+          }}
+        />
       )}
     </main>
   )
