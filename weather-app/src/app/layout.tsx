@@ -1,23 +1,19 @@
 import './globals.css'
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import type { Metadata, Viewport } from 'next'
 
-const inter = Inter({ subsets: ['latin'] })
+export const viewport: Viewport = {
+  themeColor: '#000000',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
 
 export const metadata: Metadata = {
   title: 'Weather App',
-  description: 'Real-time weather information',
-  manifest: '/manifest.json',
-  themeColor: '#1f2937',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
+  description: 'A modern weather application',
+  icons: {
+    icon: '/icon-192.png',
   },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent'
-  }
 }
 
 export default function RootLayout({
@@ -27,7 +23,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body>{children}</body>
     </html>
   )
 }
