@@ -26,6 +26,7 @@ export interface WeatherData {
     airQuality: {
       aqi: number;
       description: string;
+      dominantPollutant: string;
       pollutants: {
         co: number;
         no2: number;
@@ -33,7 +34,7 @@ export interface WeatherData {
         pm10: number;
         pm25: number;
       };
-    };
+    } | null;
     pollen: {
       grass: {
         value: number;

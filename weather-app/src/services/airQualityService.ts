@@ -28,11 +28,11 @@ export async function fetchAirQualityData(lat: number, lon: number) {
       description: index.category || getAQIDescription(index.aqi),
       dominantPollutant: index.dominantPollutant?.toUpperCase() || 'N/A',
       pollutants: {
-        co: 0,
-        no2: 0,
-        o3: 0,
-        pm10: 0,
-        pm25: 0
+        co: response.data.pollutants?.co?.concentration || 0,
+        no2: response.data.pollutants?.no2?.concentration || 0,
+        o3: response.data.pollutants?.o3?.concentration || 0,
+        pm10: response.data.pollutants?.pm10?.concentration || 0,
+        pm25: response.data.pollutants?.pm25?.concentration || 0
       }
     };
   } catch (error) {

@@ -13,6 +13,64 @@ interface SavedLocation {
   lon: number;
 }
 
+const areLocationsEqual = (loc1: SavedLocation, loc2: SavedLocation) => {
+  // Compare coordinates with some tolerance for floating point differences
+  const tolerance = 0.0001; // About 11 meters at the equator
+  return Math.abs(loc1.lat - loc2.lat) < tolerance && 
+         Math.abs(loc1.lon - loc2.lon) < tolerance;
+};
+
+const getWeatherEmoji = (condition: WeatherCondition) => {
+  switch (condition) {
+    case 'sunny':
+      return '☀️';
+    case 'rainy':
+      return '🌧️';
+    case 'cloudy':
+      return '☁️';
+    case 'icy':
+      return '❄️';
+    case 'windy':
+      return '💨';
+    default:
+      return '☀️';
+  }
+};
+
+const getWeatherIcon = (condition: WeatherCondition) => {
+  const iconClass = "h-8 w-8"
+  switch (condition.toLowerCase()) {
+    case 'sunny':
+      return <SunIcon className={iconClass} />
+    case 'rainy':
+      return <CloudArrowDownIcon className={iconClass} />
+    case 'cloudy':
+      return <CloudIcon className={iconClass} />
+    case 'icy':
+      return <CloudArrowDownIcon className={iconClass} />
+    case 'windy':
+      return <ArrowPathIcon className={iconClass} />
+    default:
+      return <CloudIcon className={iconClass} />
+  }
+};
+
+const getUVColor = (uvIndex: number): string => {
+  if (uvIndex >= 11) return 'text-[#800000]';  // Poor (Extreme)
+  if (uvIndex >= 8) return 'text-[#FF0000]';   // Poor (Very High)
+  if (uvIndex >= 6) return 'text-[#FF8C00]';   // Low (High)
+  if (uvIndex >= 3) return 'text-[#FFFE00]';   // Moderate
+  return 'text-[#009E3A]';                     // Excellent (Low)
+};
+
+const getUVDescription = (uvIndex: number): string => {
+  if (uvIndex >= 11) return 'Extreme';
+  if (uvIndex >= 8) return 'Very High';
+  if (uvIndex >= 6) return 'High';
+  if (uvIndex >= 3) return 'Moderate';
+  return 'Low';
+};
+
 export default function Home() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
   const [loading, setLoading] = useState(false)
@@ -83,44 +141,18 @@ export default function Home() {
     return 'High wind'
   }
 
-  const saveCurrentLocation = (location?: { name: string; lat: number; lon: number }) => {
-    const locationToSave = location || {
-      name: weatherData?.location || '',
-      lat: 0,
-      lon: 0
-    }
-
-    if (location) {
+  const saveCurrentLocation = (locationToSave: SavedLocation) => {
+    setSavedLocations(prevLocations => {
       // For manually selected locations (map or search)
       const exists = savedLocations.some(
         loc => loc.name === locationToSave.name || areLocationsEqual(loc, locationToSave)
       )
 
       if (!exists) {
-        const updatedLocations = [...savedLocations, locationToSave]
-        setSavedLocations(updatedLocations)
-        localStorage.setItem('savedLocations', JSON.stringify(updatedLocations))
+        return [...prevLocations, locationToSave]
       }
-    } else if (weatherData) {
-      // For current location
-      navigator.geolocation.getCurrentPosition((position) => {
-        const currentLocation = {
-          name: weatherData.location,
-          lat: position.coords.latitude,
-          lon: position.coords.longitude
-        }
-
-        const exists = savedLocations.some(
-          loc => loc.name === currentLocation.name || areLocationsEqual(loc, currentLocation)
-        )
-
-        if (!exists) {
-          const updatedLocations = [...savedLocations, currentLocation]
-          setSavedLocations(updatedLocations)
-          localStorage.setItem('savedLocations', JSON.stringify(updatedLocations))
-        }
-      })
-    }
+      return prevLocations
+    })
   }
 
   const deleteLocation = (locationToDelete: SavedLocation) => {
@@ -312,7 +344,9 @@ export default function Home() {
           Feels like {convertTemp(weatherData.feelslike, isCelsius)}°
         </p>
         <div className="inline-block bg-white/20 backdrop-blur-lg rounded-full px-4 py-2">
-          <p className="text-sm font-medium">{weatherData.condition}</p>
+          <p className="text-sm font-medium flex items-center justify-center gap-2">
+            {getWeatherEmoji(weatherData.condition)} {weatherData.condition}
+          </p>
         </div>
       </div>
 
@@ -401,13 +435,13 @@ export default function Home() {
             <p className="text-sm opacity-80 mb-1">Air Quality</p>
             <div className="text-sm font-light">
               <p>
-                <span className={getAQIColor(weatherData.details.airQuality.aqi)}>
-                  {weatherData.details.airQuality.aqi}
+                <span className={getAQIColor(weatherData.details.airQuality?.aqi ?? 0)}>
+                  {weatherData.details.airQuality?.aqi ?? 'N/A'}
                 </span>
-                <span> - {weatherData.details.airQuality.description.split(' ')[0]}</span>
+                <span> - {weatherData.details.airQuality?.description?.split(' ')[0] ?? 'Unavailable'}</span>
               </p>
               <p className="text-xs opacity-70 mt-1">
-                Main pollutant: {weatherData.details.airQuality.dominantPollutant}
+                Main pollutant: {weatherData.details.airQuality?.dominantPollutant ?? 'N/A'}
               </p>
             </div>
           </div>
@@ -488,7 +522,7 @@ export default function Home() {
                   {formatTime(hour.time, is24Hour, true)}
                 </p>
                 <div className="flex justify-center w-full">
-                  {getWeatherIcon(hour.condition)}
+                  {getWeatherEmoji(hour.condition)}
                 </div>
                 <p className="text-lg font-light mt-3 w-full text-center">
                   {convertTemp(hour.temperature, isCelsius)}°
@@ -532,7 +566,7 @@ export default function Home() {
                 <div className="flex items-center gap-4">
                   <p className="text-sm w-24">{day.date}</p>
                   <div className="flex items-center gap-2">
-                    {getWeatherIcon(day.condition)}
+                    {getWeatherEmoji(day.condition as WeatherCondition)}
                     <div className="flex flex-col items-center w-8">
                       <span className="text-xs opacity-70">{Math.round(day.precipChance)}%</span>
                       <span className="text-xs">💧</span>
@@ -594,45 +628,6 @@ function getRainDescription(chance: number): string {
   if (chance < 30) return 'Low chance of rain'
   if (chance < 70) return 'Moderate chance of rain'
   return 'High chance of rain'
-}
-
-function getWeatherIcon(condition: WeatherCondition) {
-  const iconClass = "h-8 w-8"
-  switch (condition.toLowerCase()) {
-    case 'sunny':
-      return <SunIcon className={iconClass} />
-    case 'rainy':
-      return <CloudArrowDownIcon className={iconClass} />
-    case 'cloudy':
-      return <CloudIcon className={iconClass} />
-    case 'icy':
-      return <CloudArrowDownIcon className={iconClass} />
-    case 'windy':
-      return <ArrowPathIcon className={iconClass} />
-    default:
-      return <CloudIcon className={iconClass} />
-  }
-}
-
-function areLocationsEqual(loc1: SavedLocation, loc2: SavedLocation): boolean {
-  // Only check if the exact coordinates match
-  return loc1.lat === loc2.lat && loc1.lon === loc2.lon;
-}
-
-function getUVColor(uvIndex: number): string {
-  if (uvIndex >= 11) return 'text-[#800000]';  // Extreme (11+)
-  if (uvIndex >= 8) return 'text-[#FF0000]';   // Very High (8-10)
-  if (uvIndex >= 6) return 'text-[#FF8C00]';   // High (6-7)
-  if (uvIndex >= 3) return 'text-[#FFFE00]';   // Moderate (3-5)
-  return 'text-[#009E3A]';                     // Low (0-2)
-}
-
-function getUVDescription(uvIndex: number): string {
-  if (uvIndex >= 11) return 'Extreme';
-  if (uvIndex >= 8) return 'Very High';
-  if (uvIndex >= 6) return 'High';
-  if (uvIndex >= 3) return 'Moderate';
-  return 'Low';
 }
 
 function getWindDirection(degrees: number): string {

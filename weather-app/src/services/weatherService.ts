@@ -98,9 +98,10 @@ export async function fetchWeatherData(latitude: number, longitude: number, is24
         minUV: 0,
         rainChance: today.precipprob || 0,
         humidity: current.humidity,
-        airQuality: airQualityData || {
+        airQuality: airQualityData ?? {
           aqi: 0,
           description: 'Unavailable',
+          dominantPollutant: 'N/A',
           pollutants: { co: 0, no2: 0, o3: 0, pm10: 0, pm25: 0 }
         },
         pollen: pollenData || {
