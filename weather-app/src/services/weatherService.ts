@@ -6,7 +6,7 @@ import { fetchMarineData } from './marineService';
 const WEATHER_API_KEY = process.env.NEXT_PUBLIC_VISUALCROSSING_API_KEY;
 const WEATHER_BASE_URL = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline';
 
-export async function fetchWeatherData(latitude: number, longitude: number): Promise<WeatherData> {
+export async function fetchWeatherData(latitude: number, longitude: number, is24Hour: boolean): Promise<WeatherData> {
   try {
     if (!WEATHER_API_KEY) {
       throw new Error('Visual Crossing API key is not configured');
@@ -123,8 +123,9 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
         })
         .map((hour: any) => ({
           time: new Date(hour.datetimeEpoch * 1000).toLocaleTimeString('en-US', { 
-            hour: 'numeric',
-            hour12: true,
+            hour: is24Hour ? '2-digit' : 'numeric',
+            minute: '2-digit',
+            hour12: !is24Hour,
             timeZone: response.data.timezone
           }),
           timestamp: hour.datetimeEpoch,

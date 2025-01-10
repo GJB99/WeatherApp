@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const WEATHERAPI_KEY = process.env.NEXT_PUBLIC_WEATHERAPI_API_KEY;
 
-export async function fetchMarineData(lat: number, lon: number) {
+export async function fetchMarineData(lat: number, lon: number, is24Hour: boolean) {
   try {
     // First, find the nearest coastal location
     const coastalResponse = await axios.get(
@@ -34,9 +34,9 @@ export async function fetchMarineData(lat: number, lon: number) {
     if (tidesData) {
       tides = tidesData.map((tide: any) => ({
         time: new Date(tide.tide_time).toLocaleTimeString('en-US', {
-          hour: '2-digit',
+          hour: is24Hour ? '2-digit' : 'numeric',
           minute: '2-digit',
-          hour12: true
+          hour12: !is24Hour
         }),
         type: tide.tide_type.toLowerCase(),
         height: parseFloat(tide.tide_height_mt)

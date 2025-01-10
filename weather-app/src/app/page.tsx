@@ -26,6 +26,8 @@ export default function Home() {
     return []
   })
   const [isMapOpen, setIsMapOpen] = useState(false)
+  const [is24Hour, setIs24Hour] = useState(false)
+  const [isCelsius, setIsCelsius] = useState(true)
 
   useEffect(() => {
     const getWeatherData = async () => {
@@ -37,7 +39,8 @@ export default function Home() {
               try {
                 const data = await fetchWeatherData(
                   position.coords.latitude,
-                  position.coords.longitude
+                  position.coords.longitude,
+                  is24Hour
                 )
                 setWeatherData(data)
               } catch (err) {
@@ -60,10 +63,16 @@ export default function Home() {
     getWeatherData()
   }, [])
 
+  useEffect(() => {
+    if (weatherData) {
+      loadWeatherData(weatherData.coordinates.lat, weatherData.coordinates.lon);
+    }
+  }, [is24Hour]);
+
   const loadLocation = async (location: SavedLocation) => {
     setLoading(true)
     try {
-      const data = await fetchWeatherData(location.lat, location.lon)
+      const data = await fetchWeatherData(location.lat, location.lon, is24Hour)
       setWeatherData(data)
     } catch (err) {
       setError('Failed to fetch weather data')
@@ -128,6 +137,18 @@ export default function Home() {
     localStorage.setItem('savedLocations', JSON.stringify(updatedLocations))
   }
 
+  const loadWeatherData = async (lat: number, lon: number) => {
+    setLoading(true);
+    try {
+      const data = await fetchWeatherData(lat, lon, is24Hour);
+      setWeatherData(data);
+    } catch (err) {
+      setError('Failed to fetch weather data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-gray-800 to-gray-900 text-white">
       <p className="text-xl">Loading your weather data...</p>
@@ -165,7 +186,8 @@ export default function Home() {
                     try {
                       const data = await fetchWeatherData(
                         position.coords.latitude,
-                        position.coords.longitude
+                        position.coords.longitude,
+                        is24Hour
                       )
                       setWeatherData(data)
                       saveCurrentLocation({
@@ -264,20 +286,39 @@ export default function Home() {
             </button>
           )}
         </div>
-        <p className="text-sm opacity-80">{weatherData.currentDate}</p>
+        <div className="flex items-center gap-4">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIs24Hour(!is24Hour)}
+              className={`px-2 py-1 rounded-md text-xs transition-colors ${
+                is24Hour ? 'bg-white/20' : 'hover:bg-white/10'
+              }`}
+            >
+              {is24Hour ? '24H' : 'AM/PM'}
+            </button>
+            <button
+              onClick={() => setIsCelsius(!isCelsius)}
+              className={`px-2 py-1 rounded-md text-xs transition-colors ${
+                isCelsius ? 'bg-white/20' : 'hover:bg-white/10'
+              }`}
+            >
+              {isCelsius ? '°C' : '°F'}
+            </button>
+          </div>
+          <p className="text-sm opacity-80">{weatherData.currentDate}</p>
+        </div>
       </div>
 
       {/* Current Temperature */}
       <div className="text-center mb-6">
-        <h1 className="text-[156px] font-extralight leading-none mb-4">{Math.round(weatherData.temperature)}°</h1>
-        <p className="text-sm opacity-80 mb-2">Feels like {Math.round(weatherData.feelslike)}°</p>
-        <div className="inline-block bg-white/20 px-6 py-2 rounded-full">
-          <div className="flex items-center gap-2">
-            {getWeatherIcon(weatherData.condition)}
-            <p className="text-base capitalize">
-              {weatherData.condition}
-            </p>
-          </div>
+        <h1 className="text-[156px] font-extralight leading-none mb-4">
+          {convertTemp(weatherData.temperature, isCelsius)}°
+        </h1>
+        <p className="text-sm opacity-80 mb-2">
+          Feels like {convertTemp(weatherData.feelslike, isCelsius)}°
+        </p>
+        <div className="inline-block bg-white/20 backdrop-blur-lg rounded-full px-4 py-2">
+          <p className="text-sm font-medium">{weatherData.condition}</p>
         </div>
       </div>
 
@@ -287,11 +328,11 @@ export default function Home() {
           <div className="text-center border-r border-white/20">
             <p className="text-sm opacity-80 mb-1">Today</p>
             <div className="flex justify-center gap-4 items-center">
-              <p className="text-sm font-light">↑{Math.round(weatherData.todayForecast.high)}°</p>
-              <div className="flex items-center gap-1">
-                <p className="text-sm font-light opacity-75">↓{Math.round(weatherData.todayForecast.low)}°</p>
-                {getMoonPhaseIcon(weatherData.dailyForecast[0].moonPhase)}
+              <div>
+                <span>↑{convertTemp(weatherData.todayForecast.high, isCelsius)}°</span>
+                <span className="opacity-75"> ↓{convertTemp(weatherData.todayForecast.low, isCelsius)}°</span>
               </div>
+              {getMoonPhaseIcon(weatherData.dailyForecast[0].moonPhase)}
             </div>
           </div>
           <div className="text-center">
@@ -346,12 +387,12 @@ export default function Home() {
             <p className="text-sm opacity-80 mb-1">Tides</p>
             {weatherData.seaData?.tides ? (
               <div className="text-sm font-light flex flex-col items-center">
-                {weatherData.seaData.tides.slice(0, 2).map((tide, index) => (
+                {weatherData.seaData.tides.map((tide, index) => (
                   <div key={index} className="flex items-center gap-1">
                     <span className={tide.type === 'high' ? 'text-blue-300' : 'text-blue-500'}>
                       {tide.type === 'high' ? 'High' : 'Low'}
                     </span>
-                    <span>{tide.time}</span>
+                    <span>{formatTime(tide.time, is24Hour)}</span>
                   </div>
                 ))}
               </div>
@@ -381,11 +422,11 @@ export default function Home() {
             <div className="text-sm font-light flex flex-col items-center">
               <div className="flex items-center gap-1">
                 <span className="text-orange-300">Rise</span>
-                <span>{weatherData.sunrise}</span>
+                <span>{formatTime(weatherData.sunrise, is24Hour)}</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="text-orange-500">Set</span>
-                <span>{weatherData.sunset}</span>
+                <span>{formatTime(weatherData.sunset, is24Hour)}</span>
               </div>
             </div>
           </div>
@@ -449,11 +490,15 @@ export default function Home() {
           <div className="flex gap-4 min-w-max pb-4">
             {weatherData.hourlyForecast.map((hour, index) => (
               <div key={index} className="flex flex-col items-center w-20">
-                <p className="text-sm opacity-80 mb-3 w-full text-center">{hour.time}</p>
+                <p className="text-sm opacity-80 mb-3 w-full text-center">
+                  {formatTime(hour.time, is24Hour, true)}
+                </p>
                 <div className="flex justify-center w-full">
                   {getWeatherIcon(hour.condition)}
                 </div>
-                <p className="text-lg font-light mt-3 w-full text-center">{Math.round(hour.temperature)}°</p>
+                <p className="text-lg font-light mt-3 w-full text-center">
+                  {convertTemp(hour.temperature, isCelsius)}°
+                </p>
                 {hour.precipChance > 0 && (
                   <p className="text-xs opacity-70 mt-1 text-center">
                     {Math.round(hour.precipChance)}% 💧
@@ -473,8 +518,12 @@ export default function Home() {
             <p className="text-sm opacity-80">{weatherData.tomorrowForecast.description}</p>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <p className="text-sm font-light text-right w-12">↑{Math.round(weatherData.tomorrowForecast.high)}°</p>
-            <p className="text-sm font-light text-right w-12 opacity-75">↓{Math.round(weatherData.tomorrowForecast.low)}°</p>
+            <p className="text-sm font-light text-right w-12">
+              ↑{convertTemp(weatherData.tomorrowForecast.high, isCelsius)}°
+            </p>
+            <p className="text-sm font-light text-right w-12 opacity-75">
+              ↓{convertTemp(weatherData.tomorrowForecast.low, isCelsius)}°
+            </p>
           </div>
         </div>
       </div>
@@ -496,9 +545,13 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                <p className="text-sm font-light w-12 text-right">↑{Math.round(day.high)}°</p>
                 <div className="flex items-center gap-1 justify-end">
-                  <p className="text-sm font-light w-12 text-right opacity-75">↓{Math.round(day.low)}°</p>
+                  <p className="text-sm font-light w-12 text-right">
+                    ↑{convertTemp(day.high, isCelsius)}°
+                  </p>
+                  <p className="text-sm font-light w-12 text-right opacity-75">
+                    ↓{convertTemp(day.low, isCelsius)}°
+                  </p>
                   {getMoonPhaseIcon(day.moonPhase)}
                 </div>
               </div>
@@ -514,7 +567,7 @@ export default function Home() {
           defaultCenter={weatherData ? [weatherData.coordinates.lat, weatherData.coordinates.lon] : undefined}
           onLocationSelect={async (location) => {
             try {
-              const data = await fetchWeatherData(location.lat, location.lon);
+              const data = await fetchWeatherData(location.lat, location.lon, is24Hour);
               const locationData = {
                 name: data.location,
                 lat: location.lat,
@@ -658,5 +711,48 @@ function getMoonPhaseIcon(phase: string) {
       return '🌘';
     default:
       return '🌑';
+  }
+}
+
+function convertTemp(celsius: number, isCelsius: boolean): number {
+  return isCelsius ? celsius : Math.round((celsius * 9/5) + 32);
+}
+
+function formatTime(time: string, is24Hour: boolean, removeMinutesIfZero: boolean = false): string {
+  if (!time) return '';
+  
+  try {
+    let date;
+    if (!isNaN(Number(time))) {
+      // Handle Unix timestamp
+      date = new Date(Number(time) * 1000);
+    } else if (time.includes(':')) {
+      // Handle time string (HH:MM)
+      date = new Date(`2024-01-01 ${time}`);
+    } else {
+      // Handle ISO string
+      date = new Date(time);
+    }
+    
+    if (isNaN(date.getTime())) {
+      return 'Invalid time';
+    }
+
+    if (removeMinutesIfZero && date.getMinutes() === 0) {
+      // For times like "7:00 PM" or "19:00", just return "7" or "19"
+      return date.toLocaleTimeString('en-US', {
+        hour: is24Hour ? '2-digit' : 'numeric',
+        hour12: !is24Hour
+      }).replace(':00', '');
+    }
+    
+    return date.toLocaleTimeString('en-US', {
+      hour: is24Hour ? '2-digit' : 'numeric',
+      minute: '2-digit',
+      hour12: !is24Hour
+    });
+  } catch (error) {
+    console.error('Error formatting time:', error);
+    return 'Invalid time';
   }
 }
