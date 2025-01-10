@@ -63,12 +63,6 @@ export default function Home() {
     getWeatherData()
   }, [])
 
-  useEffect(() => {
-    if (weatherData) {
-      loadWeatherData(weatherData.coordinates.lat, weatherData.coordinates.lon);
-    }
-  }, [is24Hour]);
-
   const loadLocation = async (location: SavedLocation) => {
     setLoading(true)
     try {
