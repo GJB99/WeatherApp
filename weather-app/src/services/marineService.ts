@@ -1,8 +1,9 @@
 import axios from 'axios';
+import { SeaData } from '@/types/weather';
 
 const WEATHERAPI_KEY = process.env.NEXT_PUBLIC_WEATHERAPI_API_KEY;
 
-export async function fetchMarineData(lat: number, lon: number, is24Hour: boolean) {
+export async function fetchMarineData(lat: number, lon: number, is24Hour: boolean): Promise<SeaData | undefined> {
   try {
     // First, find the nearest coastal location
     const coastalResponse = await axios.get(
@@ -50,6 +51,6 @@ export async function fetchMarineData(lat: number, lon: number, is24Hour: boolea
     };
   } catch (error) {
     console.error('Error fetching marine data:', error);
-    return null;
+    return undefined;
   }
 }

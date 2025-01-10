@@ -63,7 +63,7 @@ export async function fetchWeatherData(latitude: number, longitude: number, is24
 
     const airQualityData = await fetchAirQualityData(latitude, longitude);
     const pollenData = await fetchPollenData(latitude, longitude);
-    const marineData = await fetchMarineData(latitude, longitude);
+    const marineData = await fetchMarineData(latitude, longitude, is24Hour);
 
     return {
       temperature: current.temp,
@@ -105,9 +105,9 @@ export async function fetchWeatherData(latitude: number, longitude: number, is24
           pollutants: { co: 0, no2: 0, o3: 0, pm10: 0, pm25: 0 }
         },
         pollen: pollenData || {
-          grass: 0,
-          tree: 0,
-          weed: 0
+          grass: { value: 0, category: 'Unknown', inSeason: false, recommendations: [] },
+          tree: { value: 0, category: 'Unknown', inSeason: false, recommendations: [] },
+          weed: { value: 0, category: 'Unknown', inSeason: false, recommendations: [] }
         }
       },
       tomorrowForecast: {
@@ -178,7 +178,7 @@ function getRainDescription(chance: number): string {
   return 'High chance of rain';
 }
 
-async function getDetailedLocation(lat: number, lon: number): Promise<string> {
+async function getDetailedLocation(lat: number, lon: number): Promise<string | undefined> {
   try {
     const response = await axios.get(
       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
@@ -208,10 +208,10 @@ async function getDetailedLocation(lat: number, lon: number): Promise<string> {
       parts.push(address.town);
     }
     
-    return parts.join(', ');
+    return parts.length > 0 ? parts.join(', ') : undefined;
   } catch (error) {
     console.error('Error getting detailed location:', error);
-    return null;
+    return undefined;
   }
 }
 

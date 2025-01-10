@@ -2,9 +2,8 @@ import axios from 'axios';
 import { MoonPhase } from '@/types/weather';
 
 interface ApiMoonPhase {
-  date: string;
-  phase: string;
-  illumination: number;
+  datetimeEpoch: number;
+  moonphase: number;
 }
 
 export async function fetchMoonPhases(lat: number, lon: number) {
@@ -14,7 +13,7 @@ export async function fetchMoonPhases(lat: number, lon: number) {
     );
 
     return response.data.days.map((phase: ApiMoonPhase) => ({
-      date: new Date(phase.datetime).toLocaleDateString('en-US', { weekday: 'short' }),
+      date: new Date(phase.datetimeEpoch * 1000).toLocaleDateString('en-US', { weekday: 'short' }),
       phase: getMoonPhaseName(phase.moonphase),
       illumination: Math.round((phase.moonphase < 0.5 ? phase.moonphase * 2 : (1 - phase.moonphase) * 2) * 100)
     }));
