@@ -84,7 +84,7 @@ export interface DailyForecast {
   moonPhase: string;
 }
 
-export type WeatherCondition = 'sunny' | 'rainy' | 'icy' | 'overcast' | 'windy' | 'cloudy';
+export type WeatherCondition = 'sunny' | 'rainy' | 'icy' | 'overcast' | 'windy' | 'cloudy' | 'clear';
 
 interface TideData {
   time: string;

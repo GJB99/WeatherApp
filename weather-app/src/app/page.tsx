@@ -24,6 +24,8 @@ const getWeatherEmoji = (condition: WeatherCondition) => {
   switch (condition) {
     case 'sunny':
       return '☀️';
+    case 'clear':
+      return '🌙';
     case 'rainy':
       return '🌧️';
     case 'cloudy':

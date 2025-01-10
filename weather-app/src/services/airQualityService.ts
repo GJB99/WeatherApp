@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
@@ -36,7 +36,8 @@ export async function fetchAirQualityData(lat: number, lon: number) {
       }
     };
   } catch (error) {
-    console.error('Error fetching air quality data:', error.response?.data || error);
+    const axiosError = error as AxiosError;
+    console.error('Error fetching air quality data:', axiosError.response?.data || axiosError.message);
     return null;
   }
 }
@@ -59,6 +60,16 @@ function getAQIColor(aqi: number): string {
   return 'text-[#800000]';                 // Poor (0)
 }
 
+interface PollenInfo {
+  code: string;
+  indexInfo?: {
+    value: number;
+    category: string;
+  };
+  inSeason?: boolean;
+  healthRecommendations?: string[];
+}
+
 export async function fetchPollenData(lat: number, lon: number) {
   try {
     const response = await axios.get(
@@ -73,10 +84,10 @@ export async function fetchPollenData(lat: number, lon: number) {
     }
 
     const dailyInfo = response.data.dailyInfo[0];
-    const pollenTypes = dailyInfo.pollenTypeInfo || [];
+    const pollenTypes: PollenInfo[] = dailyInfo.pollenTypeInfo || [];
     
     const getPollenInfo = (type: string) => {
-      const info = pollenTypes.find(p => p.code === type);
+      const info = pollenTypes.find((p: PollenInfo) => p.code === type);
       return {
         value: info?.indexInfo?.value || 0,
         category: info?.indexInfo?.category || 'Unknown',

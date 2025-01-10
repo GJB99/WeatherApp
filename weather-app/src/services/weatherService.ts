@@ -159,13 +159,17 @@ export async function fetchWeatherData(latitude: number, longitude: number, is24
 
 function mapWeatherCondition(condition: string, temperature?: number): WeatherData['condition'] {
   const conditions = condition?.toLowerCase() || '';
+  const currentHour = new Date().getHours();
+  const isNighttime = currentHour < 6 || currentHour > 18; // Basic night check (6 AM to 6 PM)
 
-  if (conditions.includes('clear') || conditions.includes('sun')) return 'sunny';
+  if (conditions.includes('clear') || conditions.includes('sun')) {
+    return isNighttime ? 'clear' : 'sunny';
+  }
   if (conditions.includes('rain') || conditions.includes('drizzle') || conditions.includes('thunder')) return 'rainy';
   if (conditions.includes('snow') || conditions.includes('ice') || conditions.includes('sleet')) return 'icy';
   if (conditions.includes('cloud') || conditions.includes('overcast')) return 'cloudy';
   if (conditions.includes('wind')) return 'windy';
-  return 'sunny'; // default case
+  return isNighttime ? 'clear' : 'sunny'; // default case
 }
 
 function getRainDescription(chance: number): string {
