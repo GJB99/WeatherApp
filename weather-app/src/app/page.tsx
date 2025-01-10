@@ -229,9 +229,12 @@ export default function Home() {
         <h1 className="text-[156px] font-extralight leading-none mb-4">{Math.round(weatherData.temperature)}°</h1>
         <p className="text-sm opacity-80 mb-2">Feels like {Math.round(weatherData.feelslike)}°</p>
         <div className="inline-block bg-white/20 px-6 py-2 rounded-full">
-          <p className={`text-base capitalize ${getConditionTextColor(weatherData.condition)}`}>
-            {weatherData.condition}
-          </p>
+          <div className="flex items-center gap-2">
+            {getWeatherIcon(weatherData.condition)}
+            <p className={`text-base capitalize ${getConditionTextColor(weatherData.condition)}`}>
+              {weatherData.condition}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -288,10 +291,12 @@ export default function Home() {
         <h2 className="text-lg font-medium mb-6">Hourly Forecast</h2>
         <div className="grid grid-cols-4 gap-8">
           {weatherData.hourlyForecast.map((hour, index) => (
-            <div key={index} className="text-center">
-              <p className="text-sm mb-3 opacity-80">{hour.time}</p>
-              {getWeatherIcon(hour.condition)}
-              <p className="text-lg font-light mt-3">{Math.round(hour.temperature)}°</p>
+            <div key={index} className="flex flex-col items-center">
+              <p className="text-sm opacity-80 mb-3 w-full text-center">{hour.time}</p>
+              <div className="flex justify-center w-full">
+                {getWeatherIcon(hour.condition)}
+              </div>
+              <p className="text-lg font-light mt-3 w-full text-center">{Math.round(hour.temperature)}°</p>
             </div>
           ))}
         </div>
@@ -304,10 +309,9 @@ export default function Home() {
             <h3 className="text-lg font-medium mb-1">Tomorrow</h3>
             <p className="text-sm opacity-80">{weatherData.tomorrowForecast.description}</p>
           </div>
-          <div className="text-right">
-            <p className="text-sm font-light">
-              ↑{Math.round(weatherData.tomorrowForecast.high)}° ↓{Math.round(weatherData.tomorrowForecast.low)}°
-            </p>
+          <div className="grid grid-cols-2 gap-4">
+            <p className="text-sm font-light text-right w-12">↑{Math.round(weatherData.tomorrowForecast.high)}°</p>
+            <p className="text-sm font-light text-right w-12 opacity-75">↓{Math.round(weatherData.tomorrowForecast.low)}°</p>
           </div>
         </div>
       </div>
@@ -318,15 +322,13 @@ export default function Home() {
           <h2 className="text-lg font-medium mb-6">7-Day Forecast</h2>
           <div className="space-y-4">
             {weatherData.dailyForecast.map((day, index) => (
-              <div key={index} className="flex items-center justify-between">
+              <div key={index} className="grid grid-cols-[1fr,auto,auto] gap-4 items-center">
                 <div className="flex items-center gap-4">
                   <p className="text-sm w-24">{day.date}</p>
                   {getWeatherIcon(day.condition)}
                 </div>
-                <div className="flex gap-4">
-                  <p className="text-sm font-light">↑{Math.round(day.high)}°</p>
-                  <p className="text-sm font-light opacity-75">↓{Math.round(day.low)}°</p>
-                </div>
+                <p className="text-sm font-light w-12 text-right">↑{Math.round(day.high)}°</p>
+                <p className="text-sm font-light w-12 text-right opacity-75">↓{Math.round(day.low)}°</p>
               </div>
             ))}
           </div>
