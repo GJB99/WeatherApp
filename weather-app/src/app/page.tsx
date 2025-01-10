@@ -285,13 +285,14 @@ export default function Home() {
         <div className="grid grid-cols-2 gap-6 mb-6">
           <div className="text-center border-r border-white/20">
             <p className="text-sm opacity-80 mb-1">Today</p>
-            <p className="text-sm font-light">
-              ↑{Math.round(weatherData.todayForecast.high)}° ↓{Math.round(weatherData.todayForecast.low)}°
-            </p>
+            <div className="flex justify-center gap-4">
+              <p className="text-sm font-light">↑{Math.round(weatherData.todayForecast.high)}°</p>
+              <p className="text-sm font-light opacity-75">↓{Math.round(weatherData.todayForecast.low)}°</p>
+            </div>
           </div>
           <div className="text-center">
             <p className="text-sm opacity-80 mb-1">Humidity</p>
-            <p className="text-sm font-light">{weatherData.details.humidity}%</p>
+            <p className="text-sm font-light">{Math.round(weatherData.details.humidity)}%</p>
           </div>
         </div>
         
@@ -306,41 +307,112 @@ export default function Home() {
           </div>
           <div className="text-center">
             <p className="text-sm opacity-80 mb-1">UV Index</p>
-            <p className={`text-sm font-light ${getUVColor(weatherData.details.uvIndex)}`}>
-              {weatherData.details.uvIndex} - {getUVDescription(weatherData.details.uvIndex)}
+            <p className="text-sm font-light">
+              <span className={getUVColor(weatherData.details.uvIndex)}>{weatherData.details.uvIndex}</span>
+              <span className="text-white"> - {getUVDescription(weatherData.details.uvIndex)}</span>
+              <br />
+              <span className="text-xs">
+                <span>↑{weatherData.details.maxUV}</span>
+                <span className="opacity-70"> ↓{weatherData.details.minUV}</span>
+              </span>
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-6">
           <div className="text-center border-r border-white/20">
-            <p className="text-sm opacity-80 mb-1">Rain</p>
-            <p className="text-sm font-light">{getRainDescription(weatherData.details.rainChance)}</p>
+            <p className="text-sm opacity-80 mb-1">Air Quality</p>
+            <p className="text-sm font-light">
+              <span className={getAQIColor(weatherData.details.airQuality.aqi)}>
+                {weatherData.details.airQuality.aqi}
+              </span>
+              {' - '}{weatherData.details.airQuality.description.split(' ')[0]}
+              <br />
+              <span className="text-xs opacity-70">
+                Main pollutant: {weatherData.details.airQuality.dominantPollutant}
+              </span>
+            </p>
           </div>
           <div className="text-center">
             <p className="text-sm opacity-80 mb-1">Sun</p>
             <p className="text-sm font-light">
-              ↑{weatherData.sunrise}
+              ↑{weatherData.sunrise.split(':').slice(0, 2).join(':')}
               <br />
-              ↓{weatherData.sunset}
+              ↓{weatherData.sunset.split(':').slice(0, 2).join(':')}
             </p>
           </div>
+        </div>
+
+        <div className="text-center">
+          {weatherData.details.pollen.tree.recommendations.length > 0 && (
+            <p className="text-xs opacity-70 mt-1">
+              {weatherData.details.pollen.tree.recommendations[0]}
+            </p>
+          )}
         </div>
       </div>
 
       {/* Hourly Forecast */}
       <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mb-6">
         <h2 className="text-lg font-medium mb-6">Hourly Forecast</h2>
-        <div className="grid grid-cols-4 gap-8">
-          {weatherData.hourlyForecast.map((hour, index) => (
-            <div key={index} className="flex flex-col items-center">
-              <p className="text-sm opacity-80 mb-3 w-full text-center">{hour.time}</p>
-              <div className="flex justify-center w-full">
-                {getWeatherIcon(hour.condition)}
+        <div 
+          className="overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing"
+          onMouseDown={(e) => {
+            const ele = e.currentTarget;
+            const startX = e.pageX - ele.offsetLeft;
+            const scrollLeft = ele.scrollLeft;
+
+            const handleMouseMove = (e: MouseEvent) => {
+              const x = e.pageX - ele.offsetLeft;
+              const walk = (x - startX) * 2;
+              ele.scrollLeft = scrollLeft - walk;
+            };
+
+            const handleMouseUp = () => {
+              document.removeEventListener('mousemove', handleMouseMove);
+              document.removeEventListener('mouseup', handleMouseUp);
+            };
+
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+          }}
+          onTouchStart={(e) => {
+            const ele = e.currentTarget;
+            const touch = e.touches[0];
+            const startX = touch.pageX - ele.offsetLeft;
+            const scrollLeft = ele.scrollLeft;
+
+            const handleTouchMove = (e: TouchEvent) => {
+              const x = e.touches[0].pageX - ele.offsetLeft;
+              const walk = (x - startX) * 2;
+              ele.scrollLeft = scrollLeft - walk;
+            };
+
+            const handleTouchEnd = () => {
+              document.removeEventListener('touchmove', handleTouchMove);
+              document.removeEventListener('touchend', handleTouchEnd);
+            };
+
+            document.addEventListener('touchmove', handleTouchMove);
+            document.addEventListener('touchend', handleTouchEnd);
+          }}
+        >
+          <div className="flex gap-4 min-w-max pb-4">
+            {weatherData.hourlyForecast.map((hour, index) => (
+              <div key={index} className="flex flex-col items-center w-20">
+                <p className="text-sm opacity-80 mb-3 w-full text-center">{hour.time}</p>
+                <div className="flex justify-center w-full">
+                  {getWeatherIcon(hour.condition)}
+                </div>
+                <p className="text-lg font-light mt-3 w-full text-center">{Math.round(hour.temperature)}°</p>
+                {hour.precipChance > 0 && (
+                  <p className="text-xs opacity-70 mt-1 text-center">
+                    {Math.round(hour.precipChance)}% 💧
+                  </p>
+                )}
               </div>
-              <p className="text-lg font-light mt-3 w-full text-center">{Math.round(hour.temperature)}°</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
@@ -367,7 +439,13 @@ export default function Home() {
               <div key={index} className="grid grid-cols-[1fr,auto,auto] gap-4 items-center">
                 <div className="flex items-center gap-4">
                   <p className="text-sm w-24">{day.date}</p>
-                  {getWeatherIcon(day.condition)}
+                  <div className="flex items-center gap-2">
+                    {getWeatherIcon(day.condition)}
+                    <div className="flex flex-col items-center w-8">
+                      <span className="text-xs opacity-70">{Math.round(day.precipChance)}%</span>
+                      <span className="text-xs">💧</span>
+                    </div>
+                  </div>
                 </div>
                 <p className="text-sm font-light w-12 text-right">↑{Math.round(day.high)}°</p>
                 <p className="text-sm font-light w-12 text-right opacity-75">↓{Math.round(day.low)}°</p>
@@ -442,20 +520,20 @@ function areLocationsEqual(loc1: SavedLocation, loc2: SavedLocation): boolean {
   return loc1.lat === loc2.lat && loc1.lon === loc2.lon;
 }
 
-function getUVDescription(uvIndex: number): string {
-  if (uvIndex <= 2) return 'Low'
-  if (uvIndex <= 5) return 'Moderate'
-  if (uvIndex <= 7) return 'High'
-  if (uvIndex <= 10) return 'Very High'
-  return 'Extreme'
+function getUVColor(uvIndex: number): string {
+  if (uvIndex >= 11) return 'text-[#800000]';  // Extreme (11+)
+  if (uvIndex >= 8) return 'text-[#FF0000]';   // Very High (8-10)
+  if (uvIndex >= 6) return 'text-[#FF8C00]';   // High (6-7)
+  if (uvIndex >= 3) return 'text-[#FFFE00]';   // Moderate (3-5)
+  return 'text-[#009E3A]';                     // Low (0-2)
 }
 
-function getUVColor(uvIndex: number): string {
-  if (uvIndex <= 2) return 'text-green-400'
-  if (uvIndex <= 5) return 'text-yellow-400'
-  if (uvIndex <= 7) return 'text-orange-400'
-  if (uvIndex <= 10) return 'text-red-400'
-  return 'text-purple-400'
+function getUVDescription(uvIndex: number): string {
+  if (uvIndex >= 11) return 'Extreme';
+  if (uvIndex >= 8) return 'Very High';
+  if (uvIndex >= 6) return 'High';
+  if (uvIndex >= 3) return 'Moderate';
+  return 'Low';
 }
 
 function getWindDirection(degrees: number): string {
@@ -469,4 +547,39 @@ function getWindDirectionArrow(degrees: number): string {
   const arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'];
   const index = Math.round(degrees / 45) % 8;
   return arrows[index];
+}
+
+function getAQIColor(aqi: number): string {
+  if (aqi >= 80) return 'text-[#009E3A]';  // Excellent (100-80)
+  if (aqi >= 60) return 'text-[#84CF33]';  // Good (79-60)
+  if (aqi >= 40) return 'text-[#FFFE00]';  // Moderate (59-40)
+  if (aqi >= 20) return 'text-[#FF8C00]';  // Low (39-20)
+  if (aqi >= 1) return 'text-[#FF0000]';   // Poor (19-1)
+  return 'text-[#800000]';                 // Poor (0)
+}
+
+function getPollenLevel(value: number): string {
+  if (value <= 2) return 'Low';
+  if (value <= 4) return 'Moderate';
+  if (value <= 6) return 'High';
+  return 'Very High';
+}
+
+function getPollenColor(value: number): string {
+  if (value <= 2) return 'text-green-400';
+  if (value <= 4) return 'text-yellow-400';
+  if (value <= 6) return 'text-orange-400';
+  return 'text-red-400';
+}
+
+function getPollenDescription(type: string, value: number): string {
+  const level = getPollenLevel(value);
+  return `${type} Pollen: ${level}`;
+}
+
+function getPollenLevelEmoji(value: number): string {
+  if (value <= 2) return '🟢';
+  if (value <= 4) return '🟡';
+  if (value <= 6) return '🟠';
+  return '🔴';
 }

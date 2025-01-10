@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { WeatherData } from '@/types/weather';
+import { fetchAirQualityData, fetchPollenData } from './airQualityService';
 
 const WEATHER_API_KEY = process.env.NEXT_PUBLIC_VISUALCROSSING_API_KEY;
 const WEATHER_BASE_URL = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline';
@@ -44,14 +45,23 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
       minute: '2-digit'
     });
 
-    // Get next 12 hours from current hour, in 3-hour chunks
+    // Get next 24 hours from current hour
     const nextHours = [];
-    for (let i = 0; i < 12; i += 3) {
+    for (let i = 0; i < 24; i++) {
       const hourIndex = (currentHour + i) % 24;
       nextHours.push(today.hours[hourIndex]);
+      
+      // If we need hours from tomorrow
+      if (hourIndex + i >= 24) {
+        const tomorrowHourIndex = (hourIndex + i) % 24;
+        nextHours.push(tomorrow.hours[tomorrowHourIndex]);
+      }
     }
 
     const detailedLocation = await getDetailedLocation(latitude, longitude);
+
+    const airQualityData = await fetchAirQualityData(latitude, longitude);
+    const pollenData = await fetchPollenData(latitude, longitude);
 
     return {
       temperature: current.temp,
@@ -74,8 +84,20 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
         windSpeed: Math.round(current.windspeed),
         windDirection: current.winddir,
         uvIndex: current.uvindex,
+        maxUV: today.uvindex,
+        minUV: 0,
         rainChance: today.precipprob || 0,
-        humidity: current.humidity
+        humidity: current.humidity,
+        airQuality: airQualityData || {
+          aqi: 0,
+          description: 'Unavailable',
+          pollutants: { co: 0, no2: 0, o3: 0, pm10: 0, pm25: 0 }
+        },
+        pollen: pollenData || {
+          grass: 0,
+          tree: 0,
+          weed: 0
+        }
       },
       tomorrowForecast: {
         high: tomorrow.tempmax,
@@ -83,14 +105,25 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
         description: tomorrow.description,
         condition: mapWeatherCondition(tomorrow.conditions)
       },
-      hourlyForecast: nextHours.map((hour: any) => ({
-        time: new Date(hour.datetimeEpoch * 1000).toLocaleTimeString('en-US', { 
-          hour: 'numeric',
-          hour12: true
-        }),
-        temperature: hour.temp,
-        condition: mapWeatherCondition(hour.conditions, hour.temp)
-      })),
+      hourlyForecast: nextHours
+        .filter((hour: any) => {
+          const hourTime = new Date(hour.datetimeEpoch * 1000);
+          const currentTime = new Date();
+          return hourTime >= currentTime;
+        })
+        .map((hour: any) => ({
+          time: new Date(hour.datetimeEpoch * 1000).toLocaleTimeString('en-US', { 
+            hour: 'numeric',
+            hour12: true,
+            timeZone: response.data.timezone
+          }),
+          timestamp: hour.datetimeEpoch,
+          temperature: hour.temp,
+          condition: mapWeatherCondition(hour.conditions, hour.temp),
+          precipChance: hour.precipprob || 0
+        }))
+        .sort((a, b) => a.timestamp - b.timestamp)
+        .slice(0, 24),
       dailyForecast: response.data.days.slice(1, 8).map((day: any) => ({
         date: new Date(day.datetimeEpoch * 1000).toLocaleDateString('en-US', {
           weekday: 'short',
@@ -99,7 +132,8 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
         }),
         high: day.tempmax,
         low: day.tempmin,
-        condition: mapWeatherCondition(day.conditions)
+        condition: mapWeatherCondition(day.conditions),
+        precipChance: day.precipprob || 0
       }))
     };
   } catch (error: any) {
