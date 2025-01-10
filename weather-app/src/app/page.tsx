@@ -6,6 +6,7 @@ import type { WeatherData, WeatherCondition } from '@/types/weather'
 import LocationSearch from './LocationSearch'
 import MapSelector from './MapSelector'
 import WindDirectionArrow from './WindDirectionArrow'
+import { isNighttime } from './timeUtils'
 
 interface SavedLocation {
   name: string;
@@ -84,16 +85,16 @@ export default function Home() {
   }
 
   const getWeatherEmoji = (condition: WeatherCondition, sunriseTime?: string, sunsetTime?: string) => {
+    if (!sunriseTime || !sunsetTime) {
+      return getDefaultEmoji(condition);
+    }
+
     const now = new Date();
-    const sunrise = sunriseTime ? new Date(sunriseTime) : null;
-    const sunset = sunsetTime ? new Date(sunsetTime) : null;
-    const isNighttime = sunrise && sunset ? (now < sunrise || now > sunset) : false;
+    const isNight = isNighttime(now, sunriseTime, sunsetTime);
 
     switch (condition) {
       case 'sunny':
-        return isNighttime ? '🌙' : '☀️';
-      case 'clear':
-        return '🌙';
+        return isNight ? '🌙' : '☀️';
       case 'rainy':
         return '🌧️';
       case 'cloudy':
@@ -102,10 +103,40 @@ export default function Home() {
         return '❄️';
       case 'windy':
         return '💨';
+      case 'clear':
+        return '🌙';
       default:
-        return isNighttime ? '🌙' : '☀️';
+        return isNight ? '🌙' : '☀️';
     }
   };
+
+  function getDefaultEmoji(condition: WeatherCondition): string {
+    switch (condition) {
+      case 'sunny': return '☀️';
+      case 'rainy': return '🌧️';
+      case 'cloudy': return '☁️';
+      case 'icy': return '❄️';
+      case 'windy': return '💨';
+      case 'overcast': return '☁️';
+      case 'clear': return '🌙';
+      default: return '☀️';
+    }
+  }
+
+  function convertTo24Hour(time12h: string): string {
+    const [time, modifier] = time12h.split(' ');
+    let [hours, minutes] = time.split(':');
+
+    if (hours === '12') {
+      hours = '00';
+    }
+
+    if (modifier === 'PM') {
+      hours = String(parseInt(hours, 10) + 12);
+    }
+
+    return `${hours.padStart(2, '0')}:${minutes}`;
+  }
 
   const saveCurrentLocation = (location?: { name: string; lat: number; lon: number }) => {
     const locationToSave = location || {
@@ -323,7 +354,13 @@ export default function Home() {
               {isCelsius ? '°C' : '°F'}
             </button>
           </div>
-          <p className="text-sm opacity-80">{weatherData.currentDate}</p>
+          <p className="text-sm opacity-80">
+            {new Date().toLocaleTimeString('en-US', {
+              hour: is24Hour ? '2-digit' : 'numeric',
+              minute: '2-digit',
+              hour12: !is24Hour
+            })}
+          </p>
         </div>
       </div>
 
@@ -339,10 +376,13 @@ export default function Home() {
         </div>
         <div className="inline-flex flex-col items-center gap-1 bg-white/20 backdrop-blur-lg rounded-full px-4 py-2 mt-2">
           <div className="flex items-center gap-2">
-            {getWeatherEmoji(weatherData.condition, weatherData.sunrise, weatherData.sunset)}
-            <p className={`text-sm font-medium ${weatherData.condition}`}>
-              {weatherData.condition}
-            </p>
+            {getMainConditionEmoji(
+              weatherData.condition, 
+              weatherData.sunrise, 
+              weatherData.sunset, 
+              weatherData.timezone
+            )}
+            <span>{weatherData.condition}</span>
           </div>
           {weatherData.condition === 'cloudy' && (
             <p className="text-xs opacity-70">
@@ -524,7 +564,7 @@ export default function Home() {
                   {formatTime(hour.time, is24Hour, true)}
                 </p>
                 <div className="flex justify-center w-full">
-                  {getWeatherIcon(hour.condition, weatherData.sunrise, weatherData.sunset)}
+                  {getWeatherIcon(hour.condition, weatherData.sunrise, weatherData.sunset, hour.time)}
                 </div>
                 <p className="text-lg font-light mt-3 w-full text-center">
                   {convertTemp(hour.temperature, isCelsius)}°
@@ -568,7 +608,7 @@ export default function Home() {
                 <div className="flex items-center gap-4">
                   <p className="text-sm w-24">{day.date}</p>
                   <div className="flex items-center gap-2">
-                    {getWeatherIcon(day.condition, weatherData.sunrise, weatherData.sunset)}
+                    {getDailyForecastIcon(day.condition)}
                     <div className="flex flex-col items-center w-8">
                       <span className="text-xs opacity-70">{Math.round(day.precipChance)}%</span>
                       <span className="text-xs">💧</span>
@@ -632,15 +672,13 @@ function getRainDescription(chance: number): string {
   return 'High chance of rain'
 }
 
-function getWeatherIcon(condition: WeatherCondition, sunriseTime: string, sunsetTime: string) {
-  const now = new Date();
-  const sunrise = new Date(sunriseTime);
-  const sunset = new Date(sunsetTime);
-  const isNighttime = now < sunrise || now > sunset;
+function getWeatherIcon(condition: WeatherCondition, sunriseTime: string, sunsetTime: string, forecastTime?: number, timezone?: string) {
+  const currentTime = forecastTime ? new Date(forecastTime * 1000) : new Date();
+  const isNight = isNighttime(currentTime, sunriseTime, sunsetTime, timezone);
 
   switch (condition) {
     case 'sunny':
-      return '☀️';
+      return isNight ? '🌙' : '☀️';
     case 'clear':
       return '🌙';
     case 'rainy':
@@ -652,7 +690,7 @@ function getWeatherIcon(condition: WeatherCondition, sunriseTime: string, sunset
     case 'windy':
       return '💨';
     default:
-      return isNighttime ? '🌙' : '☀️';
+      return isNight ? '🌙' : '☀️';
   }
 }
 
@@ -775,7 +813,6 @@ function formatTime(time: string, is24Hour: boolean, removeMinutesIfZero: boolea
     }
 
     if (removeMinutesIfZero && date.getMinutes() === 0) {
-      // For times like "7:00 PM" or "19:00", just return "7" or "19"
       return date.toLocaleTimeString('en-US', {
         hour: is24Hour ? '2-digit' : 'numeric',
         hour12: !is24Hour
@@ -792,3 +829,48 @@ function formatTime(time: string, is24Hour: boolean, removeMinutesIfZero: boolea
     return 'Invalid time';
   }
 }
+
+const getMainConditionEmoji = (condition: WeatherCondition, sunriseTime?: string, sunsetTime?: string, timezone?: string) => {
+  if (sunriseTime && sunsetTime && timezone) {
+    const currentTime = new Date();
+    const isNight = isNighttime(currentTime, sunriseTime, sunsetTime, timezone);
+
+    if ((condition === 'sunny' || condition === 'clear') && isNight) {
+      return '🌙';
+    }
+  }
+
+  switch (condition) {
+    case 'sunny':
+    case 'clear':
+      return '🌙';
+    case 'rainy':
+      return '🌧️';
+    case 'cloudy':
+      return '☁️';
+    case 'icy':
+      return '❄️';
+    case 'windy':
+      return '💨';
+    default:
+      return '☀️';
+  }
+};
+
+const getDailyForecastIcon = (condition: WeatherCondition) => {
+  switch (condition) {
+    case 'sunny':
+    case 'clear':
+      return '☀️';  // Always show sun for daily forecast
+    case 'rainy':
+      return '🌧️';
+    case 'cloudy':
+      return '☁️';
+    case 'icy':
+      return '❄️';
+    case 'windy':
+      return '💨';
+    default:
+      return '☀️';
+  }
+};

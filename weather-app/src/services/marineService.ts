@@ -50,6 +50,6 @@ export async function fetchMarineData(lat: number, lon: number, is24Hour: boolea
     };
   } catch (error) {
     console.error('Error fetching marine data:', error);
-    return null;
+    return undefined;
   }
 }

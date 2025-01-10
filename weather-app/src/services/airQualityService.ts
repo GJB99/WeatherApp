@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { PollenTypeInfo, PollenAPIResponse } from '@/types/pollen';
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
@@ -14,19 +15,33 @@ export async function fetchAirQualityData(lat: number, lon: number) {
       }
     );
 
-    console.log('Air quality response:', response.data);
-
-    if (!response.data?.indexes?.[0]) {
-      console.error('No air quality index data in response');
-      return null;
-    }
-
-    const index = response.data.indexes[0];
+    const data = response.data;
     
+    // Find the dominant pollutant
+    const pollutants = {
+      co: data.pollutants?.co?.concentration || 0,
+      no2: data.pollutants?.no2?.concentration || 0,
+      o3: data.pollutants?.o3?.concentration || 0,
+      pm10: data.pollutants?.pm10?.concentration || 0,
+      pm25: data.pollutants?.pm25?.concentration || 0
+    };
+    
+    const dominantPollutant = Object.entries(pollutants)
+      .reduce((a, b) => a[1] > b[1] ? a : b)[0]
+      .toUpperCase();
+
     return {
-      aqi: index.aqi,
-      description: index.category || getAQIDescription(index.aqi),
-      dominantPollutant: index.dominantPollutant?.toUpperCase() || 'N/A',
+      aqi: data.indexes?.[0]?.aqi || 0,
+      description: data.indexes?.[0]?.category || 'Unknown',
+      dominantPollutant,
+      pollutants
+    };
+  } catch (error) {
+    console.error('Error fetching air quality data:', error);
+    return {
+      aqi: 0,
+      description: 'Unknown',
+      dominantPollutant: 'Unknown',
       pollutants: {
         co: 0,
         no2: 0,
@@ -35,9 +50,6 @@ export async function fetchAirQualityData(lat: number, lon: number) {
         pm25: 0
       }
     };
-  } catch (error) {
-    console.error('Error fetching air quality data:', error.response?.data || error);
-    return null;
   }
 }
 
@@ -76,7 +88,7 @@ export async function fetchPollenData(lat: number, lon: number) {
     const pollenTypes = dailyInfo.pollenTypeInfo || [];
     
     const getPollenInfo = (type: string) => {
-      const info = pollenTypes.find(p => p.code === type);
+      const info = pollenTypes.find((p: PollenTypeInfo) => p.code === type);
       return {
         value: info?.indexInfo?.value || 0,
         category: info?.indexInfo?.category || 'Unknown',

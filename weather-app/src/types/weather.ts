@@ -26,6 +26,7 @@ export interface WeatherData {
     airQuality: {
       aqi: number;
       description: string;
+      dominantPollutant: string;
       pollutants: {
         co: number;
         no2: number;
@@ -80,9 +81,11 @@ export interface DailyForecast {
   low: number;
   condition: WeatherCondition;
   precipChance: number;
+  moonPhase: string;
+  moonIllumination: number;
 }
 
-export type WeatherCondition = 'sunny' | 'rainy' | 'icy' | 'overcast' | 'windy' | 'cloudy';
+export type WeatherCondition = 'sunny' | 'rainy' | 'icy' | 'overcast' | 'windy' | 'cloudy' | 'clear';
 
 interface TideData {
   time: string;
