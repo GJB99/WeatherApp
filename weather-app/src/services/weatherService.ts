@@ -75,8 +75,16 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
         lon: longitude
       },
       currentDate: currentDate,
-      sunrise: current.sunrise,
-      sunset: current.sunset,
+      sunrise: new Date(`2000-01-01 ${current.sunrise}`).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }),
+      sunset: new Date(`2000-01-01 ${current.sunset}`).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }),
       todayForecast: {
         high: today.tempmax,
         low: today.tempmin

@@ -233,7 +233,7 @@ export default function Home() {
       )}
 
       {/* Location and Date */}
-      <div className="w-full max-w-md flex items-center justify-between mb-12">
+      <div className="w-full max-w-md flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <MapPinIcon className="h-5 w-5" />
           <p className="text-base">{weatherData.location}</p>
@@ -268,7 +268,7 @@ export default function Home() {
       </div>
 
       {/* Current Temperature */}
-      <div className="text-center mb-12">
+      <div className="text-center mb-6">
         <h1 className="text-[156px] font-extralight leading-none mb-4">{Math.round(weatherData.temperature)}°</h1>
         <p className="text-sm opacity-80 mb-2">Feels like {Math.round(weatherData.feelslike)}°</p>
         <div className="inline-block bg-white/20 px-6 py-2 rounded-full">
@@ -458,7 +458,7 @@ export default function Home() {
       </div>
 
       {/* Tomorrow's Forecast */}
-      <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md">
+      <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mb-6">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-medium mb-1">Tomorrow</h3>
@@ -473,7 +473,7 @@ export default function Home() {
 
       {/* Daily Forecast */}
       {weatherData.dailyForecast && (
-        <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mt-6">
+        <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md">
           <h2 className="text-lg font-medium mb-6">7-Day Forecast</h2>
           <div className="space-y-4">
             {weatherData.dailyForecast.map((day, index) => (
