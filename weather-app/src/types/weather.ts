@@ -78,8 +78,9 @@ export interface DailyForecast {
   date: string;
   high: number;
   low: number;
-  condition: WeatherCondition;
+  condition: string;
   precipChance: number;
+  moonPhase: string;
 }
 
 export type WeatherCondition = 'sunny' | 'rainy' | 'icy' | 'overcast' | 'windy' | 'cloudy';
