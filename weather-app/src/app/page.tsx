@@ -5,6 +5,7 @@ import { fetchWeatherData } from '@/services/weatherService'
 import type { WeatherData, WeatherCondition } from '@/types/weather'
 import LocationSearch from './LocationSearch'
 import MapSelector from './MapSelector'
+import WindDirectionArrow from './WindDirectionArrow'
 
 interface SavedLocation {
   name: string;
@@ -273,7 +274,7 @@ export default function Home() {
         <div className="inline-block bg-white/20 px-6 py-2 rounded-full">
           <div className="flex items-center gap-2">
             {getWeatherIcon(weatherData.condition)}
-            <p className={`text-base capitalize ${getConditionTextColor(weatherData.condition)}`}>
+            <p className="text-base capitalize">
               {weatherData.condition}
             </p>
           </div>
@@ -299,11 +300,18 @@ export default function Home() {
         <div className="grid grid-cols-2 gap-6 mb-6">
           <div className="text-center border-r border-white/20">
             <p className="text-sm opacity-80 mb-1">Wind</p>
-            <p className="text-sm font-light">
+            <div className="text-sm font-light">
               {getWindDescription(weatherData.details.windSpeed)}
               <br />
-              {weatherData.details.windSpeed} km/h {getWindDirectionArrow(weatherData.details.windDirection)} {getWindDirection(weatherData.details.windDirection)}
-            </p>
+              <span className="flex items-center justify-center gap-1">
+                {weatherData.details.windSpeed} km/h 
+                <WindDirectionArrow 
+                  degrees={weatherData.details.windDirection} 
+                  className="transition-transform duration-200"
+                /> 
+                {getWindDirection(weatherData.details.windDirection)}
+              </span>
+            </div>
           </div>
           <div className="text-center">
             <p className="text-sm opacity-80 mb-1">UV Index</p>
