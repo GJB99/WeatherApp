@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { WeatherData } from '@/types/weather';
 import { fetchAirQualityData, fetchPollenData } from './airQualityService';
+import { fetchMarineData } from './marineService';
 
 const WEATHER_API_KEY = process.env.NEXT_PUBLIC_VISUALCROSSING_API_KEY;
 const WEATHER_BASE_URL = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline';
@@ -62,6 +63,7 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
 
     const airQualityData = await fetchAirQualityData(latitude, longitude);
     const pollenData = await fetchPollenData(latitude, longitude);
+    const marineData = await fetchMarineData(latitude, longitude);
 
     return {
       temperature: current.temp,
@@ -133,8 +135,11 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
         high: day.tempmax,
         low: day.tempmin,
         condition: mapWeatherCondition(day.conditions),
-        precipChance: day.precipprob || 0
-      }))
+        precipChance: day.precipprob || 0,
+        moonPhase: getMoonPhaseName(day.moonphase),
+        moonIllumination: Math.round((day.moonphase < 0.5 ? day.moonphase * 2 : (1 - day.moonphase) * 2) * 100)
+      })),
+      seaData: marineData
     };
   } catch (error: any) {
     console.error('Error details:', error);
@@ -194,4 +199,16 @@ async function getDetailedLocation(lat: number, lon: number): Promise<string> {
     console.error('Error getting detailed location:', error);
     return null;
   }
+}
+
+function getMoonPhaseName(phase: number): string {
+  if (phase === 0 || phase === 1) return 'new moon';
+  if (phase < 0.25) return 'waxing crescent';
+  if (phase === 0.25) return 'first quarter';
+  if (phase < 0.5) return 'waxing gibbous';
+  if (phase === 0.5) return 'full moon';
+  if (phase < 0.75) return 'waning gibbous';
+  if (phase === 0.75) return 'last quarter';
+  if (phase < 1) return 'waning crescent';
+  return 'new moon';
 }

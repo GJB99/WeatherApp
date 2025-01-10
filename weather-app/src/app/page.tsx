@@ -286,9 +286,12 @@ export default function Home() {
         <div className="grid grid-cols-2 gap-6 mb-6">
           <div className="text-center border-r border-white/20">
             <p className="text-sm opacity-80 mb-1">Today</p>
-            <div className="flex justify-center gap-4">
+            <div className="flex justify-center gap-4 items-center">
               <p className="text-sm font-light">↑{Math.round(weatherData.todayForecast.high)}°</p>
-              <p className="text-sm font-light opacity-75">↓{Math.round(weatherData.todayForecast.low)}°</p>
+              <div className="flex items-center gap-1">
+                <p className="text-sm font-light opacity-75">↓{Math.round(weatherData.todayForecast.low)}°</p>
+                {getMoonPhaseIcon(weatherData.dailyForecast[0].moonPhase)}
+              </div>
             </div>
           </div>
           <div className="text-center">
@@ -327,27 +330,56 @@ export default function Home() {
           </div>
         </div>
 
+        <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="text-center border-r border-white/20">
+            <p className="text-sm opacity-80 mb-1">Sea Temperature</p>
+            {weatherData.seaData ? (
+              <div className="text-sm font-light">
+                <p>{Math.round(weatherData.seaData.temperature)}°</p>
+                <p className="text-xs opacity-70 mt-1">{weatherData.seaData.location}</p>
+              </div>
+            ) : (
+              <p className="text-sm font-light">No data</p>
+            )}
+          </div>
+          <div className="text-center">
+            <p className="text-sm opacity-80 mb-1">Tides</p>
+            {weatherData.seaData?.tides ? (
+              <div className="text-sm font-light">
+                {weatherData.seaData.tides.slice(0, 2).map((tide, index) => (
+                  <p key={index} className="flex items-center justify-center gap-1">
+                    <span>{tide.type === 'high' ? '↑' : '↓'}</span>
+                    <span>{tide.time}</span>
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm font-light">No data</p>
+            )}
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-6">
           <div className="text-center border-r border-white/20">
             <p className="text-sm opacity-80 mb-1">Air Quality</p>
-            <p className="text-sm font-light">
-              <span className={getAQIColor(weatherData.details.airQuality.aqi)}>
-                {weatherData.details.airQuality.aqi}
-              </span>
-              {' - '}{weatherData.details.airQuality.description.split(' ')[0]}
-              <br />
-              <span className="text-xs opacity-70">
+            <div className="text-sm font-light">
+              <p>
+                <span className={getAQIColor(weatherData.details.airQuality.aqi)}>
+                  {weatherData.details.airQuality.aqi}
+                </span>
+                <span> - {weatherData.details.airQuality.description.split(' ')[0]}</span>
+              </p>
+              <p className="text-xs opacity-70 mt-1">
                 Main pollutant: {weatherData.details.airQuality.dominantPollutant}
-              </span>
-            </p>
+              </p>
+            </div>
           </div>
           <div className="text-center">
             <p className="text-sm opacity-80 mb-1">Sun</p>
-            <p className="text-sm font-light">
-              ↑{weatherData.sunrise.split(':').slice(0, 2).join(':')}
-              <br />
-              ↓{weatherData.sunset.split(':').slice(0, 2).join(':')}
-            </p>
+            <div className="text-sm font-light">
+              <p>↑ {weatherData.sunrise.split(':').slice(0, 2).join(':')}</p>
+              <p>↓ {weatherData.sunset.split(':').slice(0, 2).join(':')}</p>
+            </div>
           </div>
         </div>
 
@@ -358,6 +390,7 @@ export default function Home() {
             </p>
           )}
         </div>
+
       </div>
 
       {/* Hourly Forecast */}
@@ -456,7 +489,10 @@ export default function Home() {
                   </div>
                 </div>
                 <p className="text-sm font-light w-12 text-right">↑{Math.round(day.high)}°</p>
-                <p className="text-sm font-light w-12 text-right opacity-75">↓{Math.round(day.low)}°</p>
+                <div className="flex items-center gap-1 justify-end">
+                  <p className="text-sm font-light w-12 text-right opacity-75">↓{Math.round(day.low)}°</p>
+                  {getMoonPhaseIcon(day.moonPhase)}
+                </div>
               </div>
             ))}
           </div>
@@ -590,4 +626,29 @@ function getPollenLevelEmoji(value: number): string {
   if (value <= 4) return '🟡';
   if (value <= 6) return '🟠';
   return '🔴';
+}
+
+function getMoonPhaseIcon(phase: string) {
+  const moonPhase = phase?.toLowerCase() || '';
+  
+  switch (moonPhase) {
+    case 'new moon':
+      return '🌑';
+    case 'waxing crescent':
+      return '🌒';
+    case 'first quarter':
+      return '🌓';
+    case 'waxing gibbous':
+      return '🌔';
+    case 'full moon':
+      return '🌕';
+    case 'waning gibbous':
+      return '🌖';
+    case 'last quarter':
+      return '🌗';
+    case 'waning crescent':
+      return '🌘';
+    default:
+      return '🌑';
+  }
 }

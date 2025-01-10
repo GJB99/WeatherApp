@@ -63,6 +63,8 @@ export interface WeatherData {
   };
   hourlyForecast: HourlyForecast[];
   dailyForecast: DailyForecast[];
+  seaData?: SeaData;
+  moonPhases?: MoonPhase[];
 }
 
 export interface HourlyForecast {
@@ -81,3 +83,21 @@ export interface DailyForecast {
 }
 
 export type WeatherCondition = 'sunny' | 'rainy' | 'icy' | 'overcast' | 'windy' | 'cloudy';
+
+interface TideData {
+  time: string;
+  height: number;
+  type: 'high' | 'low';
+}
+
+interface SeaData {
+  temperature: number;
+  location: string;
+  tides: TideData[];
+}
+
+interface MoonPhase {
+  date: string;
+  phase: string;
+  illumination: number;
+}
