@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
+import ErrorBoundary from './ErrorBoundary'
 
 interface Props {
   onLocationSelect: (location: { lat: number; lon: number }) => void;
@@ -30,10 +31,12 @@ export default function MapSelector({ onLocationSelect, isOpen, onClose, default
           </button>
         </div>
         <div className="h-[400px] rounded-xl overflow-hidden">
-          <MapWithNoSSR
-            defaultCenter={defaultCenter}
-            onLocationSelect={onLocationSelect}
-          />
+          <ErrorBoundary>
+            <MapWithNoSSR
+              defaultCenter={defaultCenter}
+              onLocationSelect={onLocationSelect}
+            />
+          </ErrorBoundary>
         </div>
       </div>
     </div>
