@@ -51,11 +51,13 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
       nextHours.push(today.hours[hourIndex]);
     }
 
+    const detailedLocation = await getDetailedLocation(latitude, longitude);
+
     return {
       temperature: current.temp,
       feelslike: current.feelslike,
       condition: mapWeatherCondition(current.conditions, current.temp),
-      location: cityName,
+      location: detailedLocation || cityName,
       coordinates: {
         lat: latitude,
         lon: longitude
@@ -70,6 +72,7 @@ export async function fetchWeatherData(latitude: number, longitude: number): Pro
       details: {
         time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
         windSpeed: Math.round(current.windspeed),
+        windDirection: current.winddir,
         uvIndex: current.uvindex,
         rainChance: today.precipprob || 0,
         humidity: current.humidity
@@ -120,4 +123,41 @@ function getRainDescription(chance: number): string {
   if (chance < 30) return 'Low chance of rain';
   if (chance < 70) return 'Moderate chance of rain';
   return 'High chance of rain';
+}
+
+async function getDetailedLocation(lat: number, lon: number): Promise<string> {
+  try {
+    const response = await axios.get(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
+    );
+    
+    const address = response.data.address;
+    
+    // Build location string from most specific to least specific
+    const parts = [];
+    
+    // Add suburb/neighborhood if available
+    if (address.suburb) {
+      parts.push(address.suburb);
+    } else if (address.neighbourhood) {
+      parts.push(address.neighbourhood);
+    }
+    
+    // Add city district if available
+    if (address.city_district) {
+      parts.push(address.city_district);
+    }
+    
+    // Always add city/town
+    if (address.city) {
+      parts.push(address.city);
+    } else if (address.town) {
+      parts.push(address.town);
+    }
+    
+    return parts.join(', ');
+  } catch (error) {
+    console.error('Error getting detailed location:', error);
+    return null;
+  }
 }

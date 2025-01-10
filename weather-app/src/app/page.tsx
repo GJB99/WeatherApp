@@ -206,13 +206,24 @@ export default function Home() {
             />
           </div>
           {savedLocations.map((location, index) => (
-            <button
+            <div
               key={index}
-              onClick={() => loadLocation(location)}
-              className="w-full text-left p-2 hover:bg-white/10 rounded-lg mb-2 transition-colors"
+              className="w-full flex items-center justify-between p-2 hover:bg-white/10 rounded-lg mb-2 transition-colors"
             >
-              {location.name}
-            </button>
+              <button
+                onClick={() => loadLocation(location)}
+                className="text-left flex-1"
+              >
+                {location.name}
+              </button>
+              <button 
+                onClick={() => deleteLocation(location)}
+                className="p-1 hover:bg-white/20 rounded-full transition-colors"
+                title="Remove from saved locations"
+              >
+                <MinusCircleIcon className="h-4 w-4" />
+              </button>
+            </div>
           ))}
           {savedLocations.length === 0 && (
             <p className="text-sm opacity-80">No saved locations yet</p>
@@ -290,7 +301,7 @@ export default function Home() {
             <p className="text-sm font-light">
               {getWindDescription(weatherData.details.windSpeed)}
               <br />
-              {weatherData.details.windSpeed} km/h
+              {weatherData.details.windSpeed} km/h {getWindDirectionArrow(weatherData.details.windDirection)} {getWindDirection(weatherData.details.windDirection)}
             </p>
           </div>
           <div className="text-center">
@@ -372,15 +383,19 @@ export default function Home() {
           onClose={() => setIsMapOpen(false)}
           defaultCenter={weatherData ? [weatherData.coordinates.lat, weatherData.coordinates.lon] : undefined}
           onLocationSelect={async (location) => {
-            const data = await fetchWeatherData(location.lat, location.lon)
-            const locationData = {
-              name: data.location,
-              lat: location.lat,
-              lon: location.lon
+            try {
+              const data = await fetchWeatherData(location.lat, location.lon);
+              const locationData = {
+                name: data.location,
+                lat: location.lat,
+                lon: location.lon
+              };
+              await loadLocation(locationData);
+              saveCurrentLocation(locationData);
+              setIsMapOpen(false);
+            } catch (error) {
+              console.error('Error loading location:', error);
             }
-            await loadLocation(locationData)
-            saveCurrentLocation(locationData)
-            setIsMapOpen(false)
           }}
         />
       )}
@@ -423,18 +438,8 @@ function getWeatherIcon(condition: WeatherCondition) {
 }
 
 function areLocationsEqual(loc1: SavedLocation, loc2: SavedLocation): boolean {
-  // Check if locations are within 5km of each other
-  const R = 6371; // Earth's radius in km
-  const dLat = (loc2.lat - loc1.lat) * Math.PI / 180;
-  const dLon = (loc2.lon - loc1.lon) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(loc1.lat * Math.PI / 180) * Math.cos(loc2.lat * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  const distance = R * c;
-  
-  return distance < 5; // Returns true if locations are within 5km
+  // Only check if the exact coordinates match
+  return loc1.lat === loc2.lat && loc1.lon === loc2.lon;
 }
 
 function getUVDescription(uvIndex: number): string {
@@ -451,4 +456,17 @@ function getUVColor(uvIndex: number): string {
   if (uvIndex <= 7) return 'text-orange-400'
   if (uvIndex <= 10) return 'text-red-400'
   return 'text-purple-400'
+}
+
+function getWindDirection(degrees: number): string {
+  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  const index = Math.round(((degrees % 360) / 22.5));
+  return directions[index % 16];
+}
+
+function getWindDirectionArrow(degrees: number): string {
+  // Convert degrees to closest arrow
+  const arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'];
+  const index = Math.round(degrees / 45) % 8;
+  return arrows[index];
 }
