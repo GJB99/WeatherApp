@@ -1,0 +1,20 @@
+# Dependencies
+node_modules
+weather-app\node_modules
+.pnp
+.pnp.js
+.next
+weather-app\.next
+
+# Next.js
+/.next/
+/out/
+
+# Environment files
+.env*.local
+.env
+
+# Misc
+.DS_Store
+*.pem
+.next/trace
