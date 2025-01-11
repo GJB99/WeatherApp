@@ -33,7 +33,6 @@ function MapEvents({ onLocationSelect, setSelectedPosition, setIsLoading }: {
 export default function MapSelector({ onLocationSelect, onClose, defaultCenter = [52.3676, 4.9041] }: MapSelectorProps) {
   const [selectedPosition, setSelectedPosition] = useState<[number, number]>(defaultCenter);
   const [isLoading, setIsLoading] = useState(false);
-  const [previewPosition, setPreviewPosition] = useState<[number, number] | null>(null);
   const [icon] = useState(() => 
     L.icon({
       iconUrl: '/images/leaflet/marker-icon.png',
@@ -69,9 +68,6 @@ export default function MapSelector({ onLocationSelect, onClose, defaultCenter =
             setSelectedPosition={setSelectedPosition}
             setIsLoading={setIsLoading}
           />
-          {previewPosition && !isLoading && (
-            <Marker position={previewPosition} icon={icon} opacity={0.5} />
-          )}
           <Marker position={selectedPosition} icon={icon} />
         </MapContainer>
       </div>

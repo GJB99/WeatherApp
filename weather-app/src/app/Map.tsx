@@ -23,7 +23,6 @@ function MapEvents({ onLocationSelect, setClickedPosition }: {
 }
 
 const Map = ({ defaultCenter, onLocationSelect }: Props) => {
-  const [previewPosition, setPreviewPosition] = useState<[number, number] | null>(null)
   const [clickedPosition, setClickedPosition] = useState<[number, number] | null>(null)
   const [icon, setIcon] = useState<L.Icon | null>(null)
   const [isReady, setIsReady] = useState(false)
@@ -63,7 +62,6 @@ const Map = ({ defaultCenter, onLocationSelect }: Props) => {
           onLocationSelect={onLocationSelect} 
           setClickedPosition={setClickedPosition}
         />
-        {previewPosition && !clickedPosition && <Marker position={previewPosition} icon={icon} opacity={0.5} />}
         {clickedPosition && <Marker position={clickedPosition} icon={icon} />}
       </MapContainer>
     </div>
