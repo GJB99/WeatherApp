@@ -1,12 +1,25 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { MapPinIcon, SunIcon, CloudIcon, CloudArrowDownIcon, ArrowPathIcon, Bars3Icon, PlusIcon, MinusCircleIcon, MapIcon } from '@heroicons/react/24/solid'
+import { useState, useEffect, useCallback } from 'react'
+import dynamic from 'next/dynamic'
+import { 
+  MapPinIcon, 
+  MapIcon, 
+  Bars3Icon, 
+  MinusCircleIcon, 
+  PlusIcon 
+} from '@heroicons/react/24/solid'
 import { fetchWeatherData } from '@/services/weatherService'
 import type { WeatherData, WeatherCondition } from '@/types/weather'
 import LocationSearch from './LocationSearch'
-import MapSelector from './MapSelector'
 import WindDirectionArrow from './WindDirectionArrow'
 import { isNighttime } from './timeUtils'
+import { getAQIColor } from '@/services/airQualityService'
+
+// Dynamically import MapSelector with ssr disabled
+const MapSelector = dynamic(
+  () => import('./MapSelector'),
+  { ssr: false }
+)
 
 interface SavedLocation {
   name: string;
@@ -19,57 +32,82 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [savedLocations, setSavedLocations] = useState<SavedLocation[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('savedLocations')
-      return saved ? JSON.parse(saved) : []
-    }
-    return []
-  })
+  const [savedLocations, setSavedLocations] = useState<SavedLocation[]>([])
   const [isMapOpen, setIsMapOpen] = useState(false)
   const [is24Hour, setIs24Hour] = useState(false)
   const [isCelsius, setIsCelsius] = useState(true)
+  const [currentTime, setCurrentTime] = useState('')
 
+  // Initialize state from localStorage only on client side
   useEffect(() => {
-    const getWeatherData = async () => {
-      setLoading(true)
-      try {
-        if (typeof window !== 'undefined' && navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            async (position) => {
-              try {
-                const data = await fetchWeatherData(
-                  position.coords.latitude,
-                  position.coords.longitude,
-                  is24Hour
-                )
-                setWeatherData(data)
-              } catch (err) {
-                setError('Failed to fetch weather data')
-                console.error(err)
-              }
-            },
-            () => setError('Location access denied')
-          )
-        } else {
-          setError('Geolocation is not supported')
-        }
-      } catch (err) {
-        setError('Failed to fetch weather data')
-      } finally {
-        setLoading(false)
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('savedLocations')
+      if (saved) {
+        setSavedLocations(JSON.parse(saved))
       }
     }
-
-    getWeatherData()
   }, [])
+
+  // Update localStorage when savedLocations changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('savedLocations', JSON.stringify(savedLocations))
+    }
+  }, [savedLocations])
+
+  const saveCurrentLocation = useCallback((location?: { name: string; lat: number; lon: number }) => {
+    if (typeof window === 'undefined') return;
+
+    const locationToSave = location || {
+      name: weatherData?.location || '',
+      lat: weatherData?.coordinates.lat || 0,
+      lon: weatherData?.coordinates.lon || 0
+    }
+
+    // Skip if we don't have valid coordinates
+    if (!locationToSave.lat && !locationToSave.lon) return;
+
+    const exists = savedLocations.some(loc => 
+      areLocationsEqual(loc, locationToSave) || 
+      loc.name === locationToSave.name
+    );
+
+    if (!exists) {
+      setSavedLocations(prev => [...prev, locationToSave]);
+    }
+  }, [weatherData, savedLocations])
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const data = await fetchWeatherData(
+              position.coords.latitude,
+              position.coords.longitude,
+              is24Hour
+            )
+            setWeatherData(data)
+            saveCurrentLocation()
+          } catch (error) {
+            console.error('Failed to fetch weather data:', error)
+            setError('Failed to fetch weather data')
+          } finally {
+            setLoading(false)
+          }
+        },
+        () => setError('Location access denied')
+      )
+    }
+  }, [is24Hour, saveCurrentLocation])
 
   const loadLocation = async (location: SavedLocation) => {
     setLoading(true)
     try {
       const data = await fetchWeatherData(location.lat, location.lon, is24Hour)
       setWeatherData(data)
-    } catch (err) {
+    } catch (error) {
+      console.error('Failed to fetch weather data:', error)
       setError('Failed to fetch weather data')
     } finally {
       setLoading(false)
@@ -84,119 +122,29 @@ export default function Home() {
     return 'High wind'
   }
 
-  const getWeatherEmoji = (condition: WeatherCondition, sunriseTime?: string, sunsetTime?: string) => {
-    if (!sunriseTime || !sunsetTime) {
-      return getDefaultEmoji(condition);
-    }
-
-    const now = new Date();
-    const isNight = isNighttime(now, sunriseTime, sunsetTime);
-
-    switch (condition) {
-      case 'sunny':
-        return isNight ? '🌙' : '☀️';
-      case 'rainy':
-        return '🌧️';
-      case 'cloudy':
-        return '☁️';
-      case 'icy':
-        return '❄️';
-      case 'windy':
-        return '💨';
-      case 'clear':
-        return '🌙';
-      default:
-        return isNight ? '🌙' : '☀️';
-    }
-  };
-
-  function getDefaultEmoji(condition: WeatherCondition): string {
-    switch (condition) {
-      case 'sunny': return '☀️';
-      case 'rainy': return '🌧️';
-      case 'cloudy': return '☁️';
-      case 'icy': return '❄️';
-      case 'windy': return '💨';
-      case 'overcast': return '☁️';
-      case 'clear': return '🌙';
-      default: return '☀️';
-    }
-  }
-
-  function convertTo24Hour(time12h: string): string {
-    const [time, modifier] = time12h.split(' ');
-    let [hours, minutes] = time.split(':');
-
-    if (hours === '12') {
-      hours = '00';
-    }
-
-    if (modifier === 'PM') {
-      hours = String(parseInt(hours, 10) + 12);
-    }
-
-    return `${hours.padStart(2, '0')}:${minutes}`;
-  }
-
-  const saveCurrentLocation = (location?: { name: string; lat: number; lon: number }) => {
-    const locationToSave = location || {
-      name: weatherData?.location || '',
-      lat: 0,
-      lon: 0
-    }
-
-    if (location) {
-      // For manually selected locations (map or search)
-      const exists = savedLocations.some(
-        loc => loc.name === locationToSave.name || areLocationsEqual(loc, locationToSave)
-      )
-
-      if (!exists) {
-        const updatedLocations = [...savedLocations, locationToSave]
-        setSavedLocations(updatedLocations)
-        localStorage.setItem('savedLocations', JSON.stringify(updatedLocations))
-      }
-    } else if (weatherData) {
-      // For current location
-      navigator.geolocation.getCurrentPosition((position) => {
-        const currentLocation = {
-          name: weatherData.location,
-          lat: position.coords.latitude,
-          lon: position.coords.longitude
-        }
-
-        const exists = savedLocations.some(
-          loc => loc.name === currentLocation.name || areLocationsEqual(loc, currentLocation)
-        )
-
-        if (!exists) {
-          const updatedLocations = [...savedLocations, currentLocation]
-          setSavedLocations(updatedLocations)
-          localStorage.setItem('savedLocations', JSON.stringify(updatedLocations))
-        }
-      })
-    }
-  }
-
   const deleteLocation = (locationToDelete: SavedLocation) => {
     const updatedLocations = savedLocations.filter(
       loc => loc.name !== locationToDelete.name
     )
     setSavedLocations(updatedLocations)
-    localStorage.setItem('savedLocations', JSON.stringify(updatedLocations))
   }
 
-  const loadWeatherData = async (lat: number, lon: number) => {
-    setLoading(true);
-    try {
-      const data = await fetchWeatherData(lat, lon, is24Hour);
-      setWeatherData(data);
-    } catch (err) {
-      setError('Failed to fetch weather data');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Add effect for updating time
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const updateTime = () => {
+      setCurrentTime(new Date().toLocaleTimeString('en-US', {
+        hour: is24Hour ? '2-digit' : 'numeric',
+        minute: '2-digit',
+        hour12: !is24Hour
+      }));
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, [is24Hour]);
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-gray-800 to-gray-900 text-white">
@@ -245,7 +193,8 @@ export default function Home() {
                         lon: position.coords.longitude
                       })
                       setIsMenuOpen(false)
-                    } catch (err) {
+                    } catch (error: unknown) {
+                      console.error('Failed to fetch weather data:', error instanceof Error ? error.message : 'Unknown error')
                       setError('Failed to fetch weather data')
                     } finally {
                       setLoading(false)
@@ -355,11 +304,7 @@ export default function Home() {
             </button>
           </div>
           <p className="text-sm opacity-80">
-            {new Date().toLocaleTimeString('en-US', {
-              hour: is24Hour ? '2-digit' : 'numeric',
-              minute: '2-digit',
-              hour12: !is24Hour
-            })}
+            {currentTime}
           </p>
         </div>
       </div>
@@ -564,7 +509,12 @@ export default function Home() {
                   {formatTime(hour.time, is24Hour, true)}
                 </p>
                 <div className="flex justify-center w-full">
-                  {getWeatherIcon(hour.condition, weatherData.sunrise, weatherData.sunset, hour.time)}
+                  {getMainConditionEmoji(
+                    hour.condition, 
+                    weatherData.sunrise, 
+                    weatherData.sunset, 
+                    weatherData.timezone
+                  )}
                 </div>
                 <p className="text-lg font-light mt-3 w-full text-center">
                   {convertTemp(hour.temperature, isCelsius)}°
@@ -632,7 +582,6 @@ export default function Home() {
 
       {isMapOpen && (
         <MapSelector
-          isOpen={isMapOpen}
           onClose={() => setIsMapOpen(false)}
           defaultCenter={weatherData ? [weatherData.coordinates.lat, weatherData.coordinates.lon] : undefined}
           onLocationSelect={async (location) => {
@@ -656,111 +605,16 @@ export default function Home() {
   )
 }
 
-function getConditionTextColor(condition: string) {
-  switch (condition.toLowerCase()) {
-    case 'sunny': return 'text-[#FFB067] font-bold'
-    case 'rainy': return 'text-[#4B95E9] font-bold'
-    case 'cloudy': return 'text-[#94A3B8] font-bold'
-    case 'windy': return 'text-[#718096] font-bold'
-    default: return 'text-white font-bold'
-  }
-}
-
 function getRainDescription(chance: number): string {
   if (chance < 30) return 'Low chance of rain'
   if (chance < 70) return 'Moderate chance of rain'
   return 'High chance of rain'
 }
 
-function getWeatherIcon(condition: WeatherCondition, sunriseTime: string, sunsetTime: string, forecastTime?: number, timezone?: string) {
-  const currentTime = forecastTime ? new Date(forecastTime * 1000) : new Date();
-  const isNight = isNighttime(currentTime, sunriseTime, sunsetTime, timezone);
-
-  switch (condition) {
-    case 'sunny':
-      return isNight ? '🌙' : '☀️';
-    case 'clear':
-      return '🌙';
-    case 'rainy':
-      return '🌧️';
-    case 'cloudy':
-      return '☁️';
-    case 'icy':
-      return '❄️';
-    case 'windy':
-      return '💨';
-    default:
-      return isNight ? '🌙' : '☀️';
-  }
-}
-
-function areLocationsEqual(loc1: SavedLocation, loc2: SavedLocation): boolean {
-  // Only check if the exact coordinates match
-  return loc1.lat === loc2.lat && loc1.lon === loc2.lon;
-}
-
-function getUVColor(uvIndex: number): string {
-  if (uvIndex >= 11) return 'text-[#800000]';  // Extreme (11+)
-  if (uvIndex >= 8) return 'text-[#FF0000]';   // Very High (8-10)
-  if (uvIndex >= 6) return 'text-[#FF8C00]';   // High (6-7)
-  if (uvIndex >= 3) return 'text-[#FFFE00]';   // Moderate (3-5)
-  return 'text-[#009E3A]';                     // Low (0-2)
-}
-
-function getUVDescription(uvIndex: number): string {
-  if (uvIndex >= 11) return 'Extreme';
-  if (uvIndex >= 8) return 'Very High';
-  if (uvIndex >= 6) return 'High';
-  if (uvIndex >= 3) return 'Moderate';
-  return 'Low';
-}
-
 function getWindDirection(degrees: number): string {
   const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
   const index = Math.round(((degrees % 360) / 22.5));
   return directions[index % 16];
-}
-
-function getWindDirectionArrow(degrees: number): string {
-  // Convert degrees to closest arrow
-  const arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'];
-  const index = Math.round(degrees / 45) % 8;
-  return arrows[index];
-}
-
-function getAQIColor(aqi: number): string {
-  if (aqi >= 80) return 'text-[#009E3A]';  // Excellent (100-80)
-  if (aqi >= 60) return 'text-[#84CF33]';  // Good (79-60)
-  if (aqi >= 40) return 'text-[#FFFE00]';  // Moderate (59-40)
-  if (aqi >= 20) return 'text-[#FF8C00]';  // Low (39-20)
-  if (aqi >= 1) return 'text-[#FF0000]';   // Poor (19-1)
-  return 'text-[#800000]';                 // Poor (0)
-}
-
-function getPollenLevel(value: number): string {
-  if (value <= 2) return 'Low';
-  if (value <= 4) return 'Moderate';
-  if (value <= 6) return 'High';
-  return 'Very High';
-}
-
-function getPollenColor(value: number): string {
-  if (value <= 2) return 'text-green-400';
-  if (value <= 4) return 'text-yellow-400';
-  if (value <= 6) return 'text-orange-400';
-  return 'text-red-400';
-}
-
-function getPollenDescription(type: string, value: number): string {
-  const level = getPollenLevel(value);
-  return `${type} Pollen: ${level}`;
-}
-
-function getPollenLevelEmoji(value: number): string {
-  if (value <= 2) return '🟢';
-  if (value <= 4) return '🟡';
-  if (value <= 6) return '🟠';
-  return '🔴';
 }
 
 function getMoonPhaseIcon(phase: string) {
@@ -831,19 +685,19 @@ function formatTime(time: string, is24Hour: boolean, removeMinutesIfZero: boolea
 }
 
 const getMainConditionEmoji = (condition: WeatherCondition, sunriseTime?: string, sunsetTime?: string, timezone?: string) => {
-  if (sunriseTime && sunsetTime && timezone) {
+  if (typeof window !== 'undefined' && sunriseTime && sunsetTime && timezone) {
     const currentTime = new Date();
     const isNight = isNighttime(currentTime, sunriseTime, sunsetTime, timezone);
 
     if ((condition === 'sunny' || condition === 'clear') && isNight) {
-      return '🌙';
+      return '🌙'; // Moon for night
     }
   }
 
   switch (condition) {
     case 'sunny':
     case 'clear':
-      return '🌙';
+      return '☀️';
     case 'rainy':
       return '🌧️';
     case 'cloudy':
@@ -874,3 +728,26 @@ const getDailyForecastIcon = (condition: WeatherCondition) => {
       return '☀️';
   }
 };
+
+function areLocationsEqual(loc1: SavedLocation, loc2: SavedLocation): boolean {
+  // Compare coordinates with some tolerance for floating-point differences
+  const tolerance = 0.0001;
+  return Math.abs(loc1.lat - loc2.lat) < tolerance && 
+         Math.abs(loc1.lon - loc2.lon) < tolerance;
+}
+
+function getUVColor(uv: number): string {
+  if (uv >= 11) return 'text-purple-400';  // Extreme
+  if (uv >= 8) return 'text-red-500';      // Very High
+  if (uv >= 6) return 'text-orange-400';   // High
+  if (uv >= 3) return 'text-yellow-300';   // Moderate
+  return 'text-green-400';                 // Low
+}
+
+function getUVDescription(uv: number): string {
+  if (uv >= 11) return 'Extreme';
+  if (uv >= 8) return 'Very High';
+  if (uv >= 6) return 'High';
+  if (uv >= 3) return 'Moderate';
+  return 'Low';
+}

@@ -4,6 +4,28 @@ import { fetchAirQualityData, fetchPollenData } from './airQualityService';
 import { fetchMarineData } from './marineService';
 import { isNighttime } from '@/app/timeUtils';
 
+interface HourData {
+  datetimeEpoch: number;
+  temp: number;
+  conditions: string;
+  sunrise?: string;
+  sunset?: string;
+  precipprob?: number;
+}
+
+interface DayData {
+  datetimeEpoch: number;
+  tempmax: number;
+  tempmin: number;
+  conditions: string;
+  temp: number;
+  sunrise: string;
+  sunset: string;
+  precipprob: number;
+  moonphase: number;
+  description: string;
+}
+
 const WEATHER_API_KEY = process.env.NEXT_PUBLIC_VISUALCROSSING_API_KEY;
 const WEATHER_BASE_URL = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline';
 
@@ -75,6 +97,7 @@ export async function fetchWeatherData(latitude: number, longitude: number, is24
         lat: latitude,
         lon: longitude
       },
+      timezone: response.data.timezone,
       currentDate: currentDate,
       sunrise: new Date(`2000-01-01 ${current.sunrise}`).toLocaleTimeString('en-US', {
         hour: '2-digit',
@@ -132,12 +155,12 @@ export async function fetchWeatherData(latitude: number, longitude: number, is24
         condition: mapWeatherCondition(tomorrow.conditions, tomorrow.temp, tomorrow.sunrise, tomorrow.sunset, tomorrow.datetimeEpoch, response.data.timezone)
       },
       hourlyForecast: nextHours
-        .filter((hour: any) => {
+        .filter((hour: HourData) => {
           const hourTime = new Date(hour.datetimeEpoch * 1000);
           const currentTime = new Date();
           return hourTime >= currentTime;
         })
-        .map((hour: any) => ({
+        .map((hour: HourData) => ({
           time: new Date(hour.datetimeEpoch * 1000).toLocaleTimeString('en-US', { 
             hour: is24Hour ? '2-digit' : 'numeric',
             minute: '2-digit',
@@ -158,7 +181,7 @@ export async function fetchWeatherData(latitude: number, longitude: number, is24
         }))
         .sort((a, b) => a.timestamp - b.timestamp)
         .slice(0, 24),
-      dailyForecast: response.data.days.slice(1, 8).map((day: any) => ({
+      dailyForecast: response.data.days.slice(1, 8).map((day: DayData) => ({
         date: new Date(day.datetimeEpoch * 1000).toLocaleDateString('en-US', {
           weekday: 'short',
           month: 'short',
@@ -173,8 +196,8 @@ export async function fetchWeatherData(latitude: number, longitude: number, is24
       })),
       seaData: marineData
     };
-  } catch (error: any) {
-    console.error('Error details:', error);
+  } catch (error: unknown) {
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
     throw error;
   }
 }
@@ -197,7 +220,7 @@ function mapWeatherCondition(condition: string, temp?: number, sunriseTime?: str
   return 'sunny';
 }
 
-function getRainDescription(chance: number): string {
+export function getRainDescription(chance: number): string {
   if (chance < 30) return 'Low chance of rain';
   if (chance < 70) return 'Moderate chance of rain';
   return 'High chance of rain';

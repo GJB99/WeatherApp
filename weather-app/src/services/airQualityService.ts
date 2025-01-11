@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { PollenTypeInfo, PollenAPIResponse } from '@/types/pollen';
+import { PollenTypeInfo} from '@/types/pollen';
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
@@ -53,7 +53,7 @@ export async function fetchAirQualityData(lat: number, lon: number) {
   }
 }
 
-function getAQIDescription(aqi: number): string {
+export function getAQIDescription(aqi: number): string {
   if (aqi >= 80) return 'Excellent';
   if (aqi >= 60) return 'Good';
   if (aqi >= 40) return 'Moderate';
@@ -62,7 +62,7 @@ function getAQIDescription(aqi: number): string {
   return 'Poor';
 }
 
-function getAQIColor(aqi: number): string {
+export function getAQIColor(aqi: number): string {
   if (aqi >= 80) return 'text-[#009E3A]';  // Excellent (100-80)
   if (aqi >= 60) return 'text-[#84CF33]';  // Good (79-60)
   if (aqi >= 40) return 'text-[#FFFE00]';  // Moderate (59-40)

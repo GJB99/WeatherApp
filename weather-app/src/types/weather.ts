@@ -10,6 +10,7 @@ export interface WeatherData {
     lat: number;
     lon: number;
   };
+  timezone: string;
   todayForecast: {
     high: number;
     low: number;

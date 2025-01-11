@@ -12,6 +12,13 @@ interface Props {
   onLocationSelect: (location: SearchResult) => void;
 }
 
+interface OpenWeatherLocation {
+  name: string;
+  country: string;
+  lat: number;
+  lon: number;
+}
+
 export default function LocationSearch({ onLocationSelect }: Props) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
@@ -28,7 +35,7 @@ export default function LocationSearch({ onLocationSelect }: Props) {
       const response = await axios.get(
         `https://api.openweathermap.org/geo/1.0/direct?q=${searchQuery}&limit=5&appid=${process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY}`
       )
-      const searchResults = response.data.map((item: any) => ({
+      const searchResults = response.data.map((item: OpenWeatherLocation) => ({
         name: `${item.name}, ${item.country}`,
         lat: item.lat,
         lon: item.lon
