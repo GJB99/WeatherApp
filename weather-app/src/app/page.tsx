@@ -156,7 +156,7 @@ export default function Home() {
     };
 
     initialLoad();
-  }, []);
+  }, [is24Hour, savedLocations.length]);
 
   const loadLocation = async (location: SavedLocation) => {
     try {

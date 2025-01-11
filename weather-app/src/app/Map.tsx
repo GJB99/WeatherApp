@@ -9,21 +9,14 @@ interface Props {
   onLocationSelect: (location: { lat: number; lon: number }) => void;
 }
 
-function MapEvents({ onLocationSelect, setPreviewPosition, setClickedPosition }: { 
+function MapEvents({ onLocationSelect, setClickedPosition }: { 
   onLocationSelect: (location: { lat: number; lon: number }) => void;
-  setPreviewPosition: (pos: [number, number] | null) => void;
   setClickedPosition: (pos: [number, number]) => void;
 }) {
   useMapEvents({
     click(e) {
       setClickedPosition([e.latlng.lat, e.latlng.lng])
       onLocationSelect({ lat: e.latlng.lat, lon: e.latlng.lng })
-    },
-    mousemove(e) {
-      setPreviewPosition([e.latlng.lat, e.latlng.lng])
-    },
-    mouseout() {
-      setPreviewPosition(null)
     }
   })
   return null
@@ -68,7 +61,6 @@ const Map = ({ defaultCenter, onLocationSelect }: Props) => {
         <Marker position={defaultCenter} icon={icon} />
         <MapEvents 
           onLocationSelect={onLocationSelect} 
-          setPreviewPosition={setPreviewPosition}
           setClickedPosition={setClickedPosition}
         />
         {previewPosition && !clickedPosition && <Marker position={previewPosition} icon={icon} opacity={0.5} />}
