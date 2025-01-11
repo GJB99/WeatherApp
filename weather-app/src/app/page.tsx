@@ -155,8 +155,10 @@ export default function Home() {
       }
     };
 
-    initialLoad();
-  }, [is24Hour, savedLocations.length]);
+    if (initialLoading) {
+      initialLoad();
+    }
+  }, [initialLoading]); // Only run when initialLoading changes
 
   const loadLocation = async (location: SavedLocation) => {
     try {
