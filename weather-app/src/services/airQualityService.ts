@@ -63,12 +63,12 @@ export function getAQIDescription(aqi: number): string {
 }
 
 export function getAQIColor(aqi: number): string {
-  if (aqi >= 80) return 'text-[#009E3A]';  // Excellent (100-80)
-  if (aqi >= 60) return 'text-[#84CF33]';  // Good (79-60)
-  if (aqi >= 40) return 'text-[#FFFE00]';  // Moderate (59-40)
-  if (aqi >= 20) return 'text-[#FF8C00]';  // Low (39-20)
-  if (aqi >= 1) return 'text-[#FF0000]';   // Poor (19-1)
-  return 'text-[#800000]';                 // Poor (0)
+  if (aqi >= 80) return 'text-green-400';   // Excellent (100-80)
+  if (aqi >= 60) return 'text-green-300';   // Good (79-60)
+  if (aqi >= 40) return 'text-yellow-300';  // Moderate (59-40)
+  if (aqi >= 20) return 'text-orange-400';  // Low (39-20)
+  if (aqi >= 1) return 'text-red-500';      // Poor (19-1)
+  return 'text-red-700';                    // Poor (0)
 }
 
 export async function fetchPollenData(lat: number, lon: number) {

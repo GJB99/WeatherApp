@@ -28,14 +28,14 @@ interface SavedLocation {
 }
 
 export default function Home() {
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [savedLocations, setSavedLocations] = useState<SavedLocation[]>([])
-  const [isMapOpen, setIsMapOpen] = useState(false)
-  const [is24Hour, setIs24Hour] = useState(false)
-  const [isCelsius, setIsCelsius] = useState(true)
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [savedLocations, setSavedLocations] = useState<SavedLocation[]>([]);
+  const [isMapOpen, setIsMapOpen] = useState(false);
+  const [is24Hour, setIs24Hour] = useState(false);
+  const [isCelsius, setIsCelsius] = useState(true);
   const [currentTime, setCurrentTime] = useState('')
 
   // Initialize state from localStorage only on client side
@@ -77,43 +77,97 @@ export default function Home() {
     }
   }, [weatherData, savedLocations])
 
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            const data = await fetchWeatherData(
-              position.coords.latitude,
-              position.coords.longitude,
-              is24Hour
-            )
-            setWeatherData(data)
-            saveCurrentLocation()
-          } catch (error) {
-            console.error('Failed to fetch weather data:', error)
-            setError('Failed to fetch weather data')
-          } finally {
-            setLoading(false)
-          }
-        },
-        () => setError('Location access denied')
-      )
+  const getCurrentLocation = useCallback(async () => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by your browser');
+      return;
     }
-  }, [is24Hour, saveCurrentLocation])
+
+    setInitialLoading(true);
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
+
+      const data = await fetchWeatherData(
+        position.coords.latitude,
+        position.coords.longitude,
+        is24Hour
+      );
+      setWeatherData(data);
+
+      const locationData = {
+        name: data.location,
+        lat: position.coords.latitude,
+        lon: position.coords.longitude
+      };
+
+      const exists = savedLocations.some(loc => 
+        areLocationsEqual(loc, locationData) || 
+        loc.name === locationData.name
+      );
+
+      if (!exists) {
+        setSavedLocations(prev => [...prev, locationData]);
+      }
+    } catch (error) {
+      console.error('Error getting location:', error);
+      setError('Failed to get location');
+    } finally {
+      setInitialLoading(false);
+    }
+  }, [is24Hour, savedLocations]);
+
+  // Initial load effect
+  useEffect(() => {
+    const initialLoad = async () => {
+      if (!navigator.geolocation) {
+        setError('Geolocation is not supported');
+        setInitialLoading(false);
+        return;
+      }
+      
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+
+        const data = await fetchWeatherData(
+          position.coords.latitude,
+          position.coords.longitude,
+          is24Hour
+        );
+        setWeatherData(data);
+        
+        if (savedLocations.length === 0) {
+          const locationData = {
+            name: data.location,
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          };
+          setSavedLocations([locationData]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch weather data:', error);
+        setError('Failed to fetch weather data');
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    initialLoad();
+  }, []);
 
   const loadLocation = async (location: SavedLocation) => {
-    setLoading(true)
     try {
-      const data = await fetchWeatherData(location.lat, location.lon, is24Hour)
-      setWeatherData(data)
+      const data = await fetchWeatherData(location.lat, location.lon, is24Hour);
+      setWeatherData(data);
+      setError(null);
     } catch (error) {
-      console.error('Failed to fetch weather data:', error)
-      setError('Failed to fetch weather data')
-    } finally {
-      setLoading(false)
-      setIsMenuOpen(false)
+      console.error('Error loading location:', error);
+      setError('Failed to load location data');
     }
-  }
+  };
 
   function getWindDescription(speed: number): string {
     if (speed < 5) return 'Light breeze'
@@ -146,17 +200,19 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [is24Hour]);
 
-  if (loading) return (
+  if (initialLoading) return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-gray-800 to-gray-900 text-white">
       <p className="text-xl">Loading your weather data...</p>
     </div>
-  )
+  );
+
   if (error) return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-gray-800 to-gray-900 text-white">
       <p className="text-xl">{error}</p>
     </div>
-  )
-  if (!weatherData) return null
+  );
+
+  if (!weatherData) return null;
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-800 to-gray-900 text-white flex flex-col items-center px-4 pt-8 relative">
@@ -175,36 +231,8 @@ export default function Home() {
           
           {/* Current Location Button */}
           <button
-            onClick={async () => {
-              if (navigator.geolocation) {
-                setLoading(true)
-                navigator.geolocation.getCurrentPosition(
-                  async (position) => {
-                    try {
-                      const data = await fetchWeatherData(
-                        position.coords.latitude,
-                        position.coords.longitude,
-                        is24Hour
-                      )
-                      setWeatherData(data)
-                      saveCurrentLocation({
-                        name: data.location,
-                        lat: position.coords.latitude,
-                        lon: position.coords.longitude
-                      })
-                      setIsMenuOpen(false)
-                    } catch (error: unknown) {
-                      console.error('Failed to fetch weather data:', error instanceof Error ? error.message : 'Unknown error')
-                      setError('Failed to fetch weather data')
-                    } finally {
-                      setLoading(false)
-                    }
-                  },
-                  () => setError('Location access denied')
-                )
-              }
-            }}
-            className="w-full flex items-center gap-2 p-2 mb-4 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+            onClick={getCurrentLocation}
+            className="flex items-center gap-2 w-full p-2 hover:bg-white/10 rounded-lg mb-2"
           >
             <MapPinIcon className="h-4 w-4" />
             <span>Current Location</span>
@@ -425,7 +453,7 @@ export default function Home() {
                 <span className={getAQIColor(weatherData.details.airQuality.aqi)}>
                   {weatherData.details.airQuality.aqi}
                 </span>
-                <span> - {weatherData.details.airQuality.description.split(' ')[0]}</span>
+                <span className="text-white"> - {weatherData.details.airQuality.description.split(' ')[0]}</span>
               </p>
               <p className="text-xs opacity-70 mt-1">
                 Main pollutant: {weatherData.details.airQuality.dominantPollutant}
@@ -592,11 +620,12 @@ export default function Home() {
                 lat: location.lat,
                 lon: location.lon
               };
-              await loadLocation(locationData);
+              setWeatherData(data);
               saveCurrentLocation(locationData);
               setIsMapOpen(false);
             } catch (error) {
               console.error('Error loading location:', error);
+              setError('Failed to load location data');
             }
           }}
         />
