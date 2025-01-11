@@ -43,7 +43,7 @@ interface TideInfo {
 export async function fetchMarineData(lat: number, lon: number, is24Hour: boolean) {
   try {
     const coastalResponse = await axios.get(
-      `http://api.weatherapi.com/v1/search.json?key=${WEATHERAPI_KEY}&q=${lat},${lon}`
+      `https://api.weatherapi.com/v1/search.json?key=${WEATHERAPI_KEY}&q=${lat},${lon}`
     );
 
     const coastalLocation = coastalResponse.data.find((loc: WeatherLocation) => 
@@ -54,7 +54,7 @@ export async function fetchMarineData(lat: number, lon: number, is24Hour: boolea
     ) || coastalResponse.data[0];
 
     const response = await axios.get<MarineResponse>(
-      `http://api.weatherapi.com/v1/marine.json?key=${WEATHERAPI_KEY}&q=${coastalLocation.lat},${coastalLocation.lon}&days=1`
+      `https://api.weatherapi.com/v1/marine.json?key=${WEATHERAPI_KEY}&q=${coastalLocation.lat},${coastalLocation.lon}&days=1`
     );
 
     const currentHour = response.data.forecast.forecastday[0].hour.find((h: HourForecast) => {
