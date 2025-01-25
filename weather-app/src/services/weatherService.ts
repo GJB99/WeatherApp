@@ -88,7 +88,8 @@ export async function fetchWeatherData(latitude: number, longitude: number, is24
     const pollenData = await fetchPollenData(latitude, longitude);
     const marineData = await fetchMarineData(latitude, longitude, is24Hour);
 
-    return {
+    // Create the weather data object
+    const weatherData: WeatherData = {
       temperature: current.temp,
       feelslike: current.feelslike,
       condition: mapWeatherCondition(current.conditions, current.temp, current.sunrise, current.sunset, current.datetimeEpoch, response.data.timezone),
@@ -196,6 +197,8 @@ export async function fetchWeatherData(latitude: number, longitude: number, is24
       })),
       seaData: marineData
     };
+
+    return weatherData;
   } catch (error: unknown) {
     console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
     throw error;

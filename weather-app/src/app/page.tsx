@@ -429,17 +429,11 @@ export default function Home() {
             )}
           </div>
           <div className="text-center">
-            <p className="text-sm opacity-80 mb-1">Tides</p>
-            {weatherData.seaData?.tides ? (
-              <div className="text-sm font-light flex flex-col items-center">
-                {weatherData.seaData.tides.map((tide, index) => (
-                  <div key={index} className="flex items-center gap-1">
-                    <span className={tide.type === 'high' ? 'text-blue-300' : 'text-blue-500'}>
-                      {tide.type === 'high' ? 'High' : 'Low'}
-                    </span>
-                    <span>{formatTime(tide.time, is24Hour)}</span>
-                  </div>
-                ))}
+            <p className="text-sm opacity-80 mb-1">Wave Height</p>
+            {weatherData.seaData?.waveHeight ? (
+              <div className="text-sm font-light">
+                <p>{weatherData.seaData.waveHeight}m</p>
+                <p className="text-xs opacity-70 mt-1">Current</p>
               </div>
             ) : (
               <p className="text-sm font-light">No data</p>

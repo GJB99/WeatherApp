@@ -97,7 +97,7 @@ interface TideData {
 interface SeaData {
   temperature: number;
   location: string;
-  tides: TideData[];
+  waveHeight: number;
 }
 
 interface MoonPhase {
