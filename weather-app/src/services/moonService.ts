@@ -10,7 +10,7 @@ export async function fetchMoonPhases(startDate: string, days: number = 7) {
     return response.data.phases.map((phase: MoonPhase) => ({
       date: new Date(phase.date).toLocaleDateString('en-US', { weekday: 'short' }),
       phase: phase.phase,
-      illumination: phase.illumination
+      moonIllumination: phase.moonIllumination
     }));
   } catch (error) {
     console.error('Error fetching moon phases:', error);

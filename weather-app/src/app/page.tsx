@@ -433,13 +433,17 @@ export default function Home() {
         <div className="grid grid-cols-2 gap-6 mb-6">
           <div className="text-center border-r border-white/20">
             <p className="text-sm opacity-80 mb-1">Water Temperature</p>
-            {weatherData.seaData ? (
-              <div className="text-sm font-light">
-                <p>{Math.round(weatherData.seaData.temperature)}°</p>
-                <p className="text-xs opacity-70 mt-1">{weatherData.seaData.location}</p>
+            {weatherData.seaData && (
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-center">
+                  <span>Water Temperature</span>
+                  <span>{weatherData.seaData.temperature}°C</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Wave Height</span>
+                  <span>{weatherData.seaData.waveHeight}m</span>
+                </div>
               </div>
-            ) : (
-              <p className="text-sm font-light">No data</p>
             )}
           </div>
           <div className="text-center">
@@ -656,40 +660,41 @@ function getWindDirection(degrees: number): string {
   return directions[index % 16];
 }
 
-function getMoonPhaseIcon(phase: string, illumination: number): string {
+function getMoonPhaseIcon(phase: string, moonIllumination: number) {
   const phaseLower = phase.toLowerCase();
   const imagePath = '/images/15-moon-phases-icons-4.png';
-  const spriteSize = 100; // assuming each icon is 100x100px
+  const spriteSize = 100;
   
-  // Calculate sprite position based on phase and illumination
   let spriteIndex = 0;
   
   if (phaseLower.includes('new moon')) {
     spriteIndex = 0;
   } else if (phaseLower.includes('waxing crescent')) {
-    spriteIndex = Math.floor(illumination / 25) + 1; // 1-3
+    spriteIndex = Math.floor(moonIllumination / 25) + 1;
   } else if (phaseLower.includes('first quarter')) {
     spriteIndex = 4;
   } else if (phaseLower.includes('waxing gibbous')) {
-    spriteIndex = Math.floor(illumination / 25) + 5; // 5-7
+    spriteIndex = Math.floor(moonIllumination / 25) + 5;
   } else if (phaseLower.includes('full moon')) {
     spriteIndex = 8;
   } else if (phaseLower.includes('waning gibbous')) {
-    spriteIndex = Math.floor(illumination / 25) + 9; // 9-11
+    spriteIndex = Math.floor(moonIllumination / 25) + 9;
   } else if (phaseLower.includes('last quarter')) {
     spriteIndex = 12;
   } else if (phaseLower.includes('waning crescent')) {
-    spriteIndex = Math.floor(illumination / 25) + 13; // 13-15
+    spriteIndex = Math.floor(moonIllumination / 25) + 13;
   }
 
-  return `<div style="
-    width: ${spriteSize}px;
-    height: ${spriteSize}px;
-    background-image: url(${imagePath});
-    background-position: -${spriteIndex * spriteSize}px 0;
-    display: inline-block;
-    background-size: ${spriteSize * 15}px ${spriteSize}px;
-  "></div>`;
+  const style = {
+    width: `${spriteSize}px`,
+    height: `${spriteSize}px`,
+    backgroundImage: `url(${imagePath})`,
+    backgroundPosition: `-${spriteIndex * spriteSize}px 0`,
+    display: 'inline-block',
+    backgroundSize: `${spriteSize * 15}px ${spriteSize}px`
+  };
+
+  return <div style={style} />;
 }
 
 function convertTemp(celsius: number, isCelsius: boolean): number {

@@ -1,7 +1,7 @@
 export interface MoonPhase {
     date: string;
     phase: string;
-    illumination: number;
+    moonIllumination: number;
   }
   
   export interface MoonAPIResponse {
