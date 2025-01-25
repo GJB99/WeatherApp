@@ -602,13 +602,15 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 justify-end">
-                  <p className="text-sm font-light w-12 text-right">
+                <div className="text-right mr-4">
+                  <p className="text-sm font-light">
                     ↑{convertTemp(day.high, isCelsius)}°
                   </p>
-                  <p className="text-sm font-light w-12 text-right opacity-75">
+                  <p className="text-sm font-light opacity-75">
                     ↓{convertTemp(day.low, isCelsius)}°
                   </p>
+                </div>
+                <div className="w-16 flex justify-end">
                   {getMoonPhaseIcon(day.moonPhase, day.moonIllumination)}
                 </div>
               </div>
@@ -701,8 +703,8 @@ function getMoonPhaseIcon(phase: string, moonIllumination: number) {
       <Image 
         src={`/images/${imageName}.png`} 
         alt={`Moon phase: ${phase}`}
-        width={24}
-        height={24}
+        width={30}
+        height={30}
       />
     </div>
   );
