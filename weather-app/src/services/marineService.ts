@@ -19,6 +19,10 @@ export async function fetchMarineData(lat: number, lon: number, is24Hour: boolea
     );
 
     // Get current hour's data
+    const currentTime = new Date().toLocaleTimeString('en-US', {
+      hour: is24Hour ? '2-digit' : 'numeric',
+      hour12: !is24Hour
+    });
     const currentHour = new Date().getHours();
     const currentIndex = response.data.hourly.time.findIndex(time => 
       new Date(time).getHours() === currentHour
