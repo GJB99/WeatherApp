@@ -494,6 +494,38 @@ export default function Home() {
 
       </div>
 
+      {/* Marine Data Section */}
+      <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mb-6">
+        <h2 className="text-lg font-medium mb-4">Marine Conditions</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-center border-r border-white/20 pr-4">
+            <p className="text-sm opacity-80 mb-2">Water Temperature</p>
+            {weatherData.seaData ? (
+              <p className="text-2xl font-light">
+                {weatherData.seaData.temperature}°C
+              </p>
+            ) : (
+              <p className="text-sm opacity-70">No data available</p>
+            )}
+          </div>
+          <div className="text-center pl-4">
+            <p className="text-sm opacity-80 mb-2">Wave Height</p>
+            {weatherData.seaData ? (
+              <div className="text-2xl font-light">
+                {weatherData.seaData.waveHeight}m
+              </div>
+            ) : (
+              <p className="text-sm opacity-70">No data available</p>
+            )}
+          </div>
+        </div>
+        {weatherData.seaData && (
+          <p className="text-xs text-center mt-4 opacity-70">
+            Data for {weatherData.seaData.location} at {formatTime(currentTime, is24Hour)}
+          </p>
+        )}
+      </div>
+
       {/* Hourly Forecast */}
       <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mb-6">
         <h2 className="text-lg font-medium mb-6">Hourly Forecast</h2>
