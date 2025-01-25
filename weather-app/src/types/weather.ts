@@ -88,12 +88,6 @@ export interface DailyForecast {
 
 export type WeatherCondition = 'sunny' | 'rainy' | 'icy' | 'overcast' | 'windy' | 'cloudy' | 'clear';
 
-interface TideData {
-  time: string;
-  height: number;
-  type: 'high' | 'low';
-}
-
 interface SeaData {
   temperature: number;
   location: string;
