@@ -202,6 +202,12 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [is24Hour]);
 
+  useEffect(() => {
+    if (!initialLoading && savedLocations.length > 0) {
+      loadLocation(savedLocations[0]);
+    }
+  }, [initialLoading, loadLocation, savedLocations, is24Hour]);
+
   if (initialLoading) return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-gray-800 to-gray-900 text-white">
       <p className="text-xl">Loading your weather data...</p>
