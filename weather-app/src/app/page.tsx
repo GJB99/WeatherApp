@@ -160,7 +160,7 @@ export default function Home() {
     }
   }, [initialLoading]); // Only run when initialLoading changes
 
-  const loadLocation = async (location: SavedLocation) => {
+  const loadLocation = useCallback(async (location: SavedLocation) => {
     try {
       const data = await fetchWeatherData(location.lat, location.lon, is24Hour);
       setWeatherData(data);
@@ -169,7 +169,7 @@ export default function Home() {
       console.error('Error loading location:', error);
       setError('Failed to load location data');
     }
-  };
+  }, [is24Hour]);
 
   function getWindDescription(speed: number): string {
     if (speed < 5) return 'Light breeze'
@@ -206,7 +206,7 @@ export default function Home() {
     if (!initialLoading && savedLocations.length > 0) {
       loadLocation(savedLocations[0]);
     }
-  }, [initialLoading, loadLocation, savedLocations, is24Hour]);
+  }, [initialLoading, loadLocation, savedLocations.length]);
 
   if (initialLoading) return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-gray-800 to-gray-900 text-white">
