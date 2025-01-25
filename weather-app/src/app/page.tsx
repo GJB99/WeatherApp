@@ -662,27 +662,32 @@ function getWindDirection(degrees: number): string {
 
 function getMoonPhaseIcon(phase: string, moonIllumination: number) {
   const phaseLower = phase.toLowerCase();
-  const imagePath = '/images/15-moon-phases-icons-4.png';
+  const imagePath = '/images/moon-phases-cropped.png';
   const spriteSize = 100;
   
   let spriteIndex = 0;
   
+  // 12 moon phases with more granular illumination
   if (phaseLower.includes('new moon')) {
-    spriteIndex = 0;
+    spriteIndex = 0;  // New Moon (0%)
   } else if (phaseLower.includes('waxing crescent')) {
-    spriteIndex = Math.floor(moonIllumination / 25) + 1;
+    if (moonIllumination <= 15) spriteIndex = 1;      // Early waxing crescent (15%)
+    else if (moonIllumination <= 30) spriteIndex = 2; // Late waxing crescent (30%)
   } else if (phaseLower.includes('first quarter')) {
-    spriteIndex = 4;
+    spriteIndex = 3;  // First Quarter (50%)
   } else if (phaseLower.includes('waxing gibbous')) {
-    spriteIndex = Math.floor(moonIllumination / 25) + 5;
+    if (moonIllumination <= 65) spriteIndex = 4;      // Early waxing gibbous (65%)
+    else if (moonIllumination <= 85) spriteIndex = 5; // Late waxing gibbous (85%)
   } else if (phaseLower.includes('full moon')) {
-    spriteIndex = 8;
+    spriteIndex = 6;  // Full Moon (100%)
   } else if (phaseLower.includes('waning gibbous')) {
-    spriteIndex = Math.floor(moonIllumination / 25) + 9;
+    if (moonIllumination >= 85) spriteIndex = 7;      // Early waning gibbous (85%)
+    else if (moonIllumination >= 65) spriteIndex = 8; // Late waning gibbous (65%)
   } else if (phaseLower.includes('last quarter')) {
-    spriteIndex = 12;
+    spriteIndex = 9;  // Last Quarter (50%)
   } else if (phaseLower.includes('waning crescent')) {
-    spriteIndex = Math.floor(moonIllumination / 25) + 13;
+    if (moonIllumination >= 30) spriteIndex = 10;     // Early waning crescent (30%)
+    else if (moonIllumination >= 15) spriteIndex = 11; // Late waning crescent (15%)
   }
 
   const style = {
@@ -691,10 +696,15 @@ function getMoonPhaseIcon(phase: string, moonIllumination: number) {
     backgroundImage: `url(${imagePath})`,
     backgroundPosition: `-${spriteIndex * spriteSize}px 0`,
     display: 'inline-block',
-    backgroundSize: `${spriteSize * 15}px ${spriteSize}px`
+    backgroundSize: `${spriteSize * 12}px ${spriteSize}px`
   };
 
-  return <div style={style} />;
+  return (
+    <div className="flex flex-col items-center">
+      <span className="text-xs opacity-70">{Math.round(moonIllumination)}%</span>
+      <div style={style} />
+    </div>
+  );
 }
 
 function convertTemp(celsius: number, isCelsius: boolean): number {
@@ -745,7 +755,7 @@ const getMainConditionEmoji = (condition: WeatherCondition, sunriseTime?: string
     const isNight = isNighttime(currentTime, sunriseTime, sunsetTime, timezone);
 
     if ((condition === 'sunny' || condition === 'clear') && isNight) {
-      return '🌙'; // Moon for night
+      return <img src="/images/clear-night.png" alt="Clear night" className="w-6 h-6" />;
     }
   }
 
