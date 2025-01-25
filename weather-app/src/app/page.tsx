@@ -214,7 +214,7 @@ export default function Home() {
     if (!initialLoading && savedLocations.length > 0) {
       loadLocation(savedLocations[0]);
     }
-  }, [initialLoading, loadLocation, savedLocations.length]);
+  }, [initialLoading, loadLocation, savedLocations.length, is24Hour]);
 
   if (initialLoading) return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-gray-800 to-gray-900 text-white">

@@ -97,5 +97,5 @@ interface SeaData {
 interface MoonPhase {
   date: string;
   phase: string;
-  illumination: number;
+  moonIllumination: number;
 }
