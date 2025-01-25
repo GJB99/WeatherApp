@@ -552,7 +552,17 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <p className="text-sm opacity-70">No marine data available for this location</p>
+          <div className="text-center py-4">
+            <p className="text-sm opacity-70">
+              Marine data available for coastal locations only
+            </p>
+            <button 
+              className="mt-2 text-xs opacity-50 hover:opacity-70 transition-opacity"
+              onClick={() => window.open('https://open-meteo.com/en/docs/marine-weather-api', '_blank')}
+            >
+              Learn about marine data coverage
+            </button>
+          </div>
         )}
       </div>
 
