@@ -88,10 +88,19 @@ export interface DailyForecast {
 
 export type WeatherCondition = 'sunny' | 'rainy' | 'icy' | 'overcast' | 'windy' | 'cloudy' | 'clear';
 
-interface SeaData {
+export interface SeaData {
   temperature: number;
-  location: string;
   waveHeight: number;
+  waveDirection: number;
+  wavePeriod: number;
+  swellHeight: number;
+  swellDirection: number;
+  swellPeriod: number;
+  units: {
+    waveHeight: string;
+    direction: string;
+    period: string;
+  };
 }
 
 interface MoonPhase {

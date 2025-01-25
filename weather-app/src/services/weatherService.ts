@@ -195,7 +195,7 @@ export async function fetchWeatherData(latitude: number, longitude: number, is24
         moonPhase: getMoonPhaseName(day.moonphase),
         moonIllumination: Math.round((day.moonphase < 0.5 ? day.moonphase * 2 : (1 - day.moonphase) * 2) * 100)
       })),
-      seaData: marineData
+      seaData: (await fetchMarineData(latitude, longitude)) || undefined
     };
 
     return weatherData;
