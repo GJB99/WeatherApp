@@ -662,58 +662,53 @@ function getWindDirection(degrees: number): string {
 
 function getMoonPhaseIcon(phase: string, moonIllumination: number) {
   const phaseLower = phase.toLowerCase();
-  const imagePath = '/images/moon-phases-cropped.png';
-  const spriteSize = 40;
+  const spriteSize = 24; // Small icon size
   
-  let spriteIndex = 0;
-  
+  // Map the moon phase to the actual image name
+  let imageName = 'clear-night'; // default
+
   if (phaseLower.includes('new moon')) {
-    spriteIndex = 12;  // new-moon.png (completely dark)
+    imageName = 'new-moon';
   } else if (phaseLower.includes('waxing crescent')) {
     if (moonIllumination <= 15) {
-      spriteIndex = 1;  // moon-almost-empty
+      imageName = 'moon-almost-empty';
     } else {
-      spriteIndex = 2;  // moon-crescent-almost-empty
+      imageName = 'moon-crescent-almost-empty';
     }
   } else if (phaseLower.includes('first quarter')) {
-    spriteIndex = 3;  // moon-almost-half
+    imageName = 'moon-almost-half';
   } else if (phaseLower.includes('waxing gibbous')) {
     if (moonIllumination <= 65) {
-      spriteIndex = 4;  // moon-crescent-almost-half
+      imageName = 'moon-crescent-almost-half';
     } else {
-      spriteIndex = 5;  // moon-almost-full
+      imageName = 'moon-almost-full';
     }
   } else if (phaseLower.includes('full moon')) {
-    spriteIndex = 6;  // moon-full
+    imageName = 'moon-full';
   } else if (phaseLower.includes('waning gibbous')) {
     if (moonIllumination >= 85) {
-      spriteIndex = 7;  // moon-over-half
+      imageName = 'moon-over-half';
     } else {
-      spriteIndex = 8;  // moon-crescent-half
+      imageName = 'moon-crescent-half';
     }
   } else if (phaseLower.includes('last quarter')) {
-    spriteIndex = 9;  // moon-half
+    imageName = 'moon-half';
   } else if (phaseLower.includes('waning crescent')) {
     if (moonIllumination >= 30) {
-      spriteIndex = 10;  // moon-crescent-quarter-empty
+      imageName = 'moon-crescent-quarter-empty';
     } else {
-      spriteIndex = 11;  // moon-quarter-empty
+      imageName = 'moon-quarter-empty';
     }
   }
-
-  const style = {
-    width: `${spriteSize}px`,
-    height: `${spriteSize}px`,
-    backgroundImage: `url(${imagePath})`,
-    backgroundPosition: `-${spriteIndex * spriteSize}px 0`,
-    display: 'inline-block',
-    backgroundSize: `${spriteSize * 12}px ${spriteSize}px`
-  };
 
   return (
     <div className="flex flex-col items-center">
       <span className="text-xs opacity-70">{Math.round(moonIllumination)}%</span>
-      <div style={style} />
+      <img 
+        src={`/images/${imageName}.png`} 
+        alt={`Moon phase: ${phase}`}
+        className="w-6 h-6" // 24px size
+      />
     </div>
   );
 }
