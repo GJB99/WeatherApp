@@ -86,7 +86,15 @@ export default function Home() {
     setInitialLoading(true);
     try {
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject);
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+          }
+        );
       });
 
       const data = await fetchWeatherData(
@@ -383,7 +391,7 @@ export default function Home() {
                 <span>↑{convertTemp(weatherData.todayForecast.high, isCelsius)}°</span>
                 <span className="opacity-75"> ↓{convertTemp(weatherData.todayForecast.low, isCelsius)}°</span>
               </div>
-              {getMoonPhaseIcon(weatherData.dailyForecast[0].moonPhase)}
+              {getMoonPhaseIcon(weatherData.dailyForecast[0].moonPhase, weatherData.dailyForecast[0].moonIllumination)}
             </div>
           </div>
           <div className="text-center">
@@ -602,7 +610,7 @@ export default function Home() {
                   <p className="text-sm font-light w-12 text-right opacity-75">
                     ↓{convertTemp(day.low, isCelsius)}°
                   </p>
-                  {getMoonPhaseIcon(day.moonPhase)}
+                  {getMoonPhaseIcon(day.moonPhase, day.moonIllumination)}
                 </div>
               </div>
             ))}
@@ -648,29 +656,40 @@ function getWindDirection(degrees: number): string {
   return directions[index % 16];
 }
 
-function getMoonPhaseIcon(phase: string) {
-  const moonPhase = phase?.toLowerCase() || '';
+function getMoonPhaseIcon(phase: string, illumination: number): string {
+  const phaseLower = phase.toLowerCase();
+  const imagePath = '/images/15-moon-phases-icons-4.png';
+  const spriteSize = 100; // assuming each icon is 100x100px
   
-  switch (moonPhase) {
-    case 'new moon':
-      return '🌑';
-    case 'waxing crescent':
-      return '🌒';
-    case 'first quarter':
-      return '🌓';
-    case 'waxing gibbous':
-      return '🌔';
-    case 'full moon':
-      return '🌕';
-    case 'waning gibbous':
-      return '🌖';
-    case 'last quarter':
-      return '🌗';
-    case 'waning crescent':
-      return '🌘';
-    default:
-      return '🌑';
+  // Calculate sprite position based on phase and illumination
+  let spriteIndex = 0;
+  
+  if (phaseLower.includes('new moon')) {
+    spriteIndex = 0;
+  } else if (phaseLower.includes('waxing crescent')) {
+    spriteIndex = Math.floor(illumination / 25) + 1; // 1-3
+  } else if (phaseLower.includes('first quarter')) {
+    spriteIndex = 4;
+  } else if (phaseLower.includes('waxing gibbous')) {
+    spriteIndex = Math.floor(illumination / 25) + 5; // 5-7
+  } else if (phaseLower.includes('full moon')) {
+    spriteIndex = 8;
+  } else if (phaseLower.includes('waning gibbous')) {
+    spriteIndex = Math.floor(illumination / 25) + 9; // 9-11
+  } else if (phaseLower.includes('last quarter')) {
+    spriteIndex = 12;
+  } else if (phaseLower.includes('waning crescent')) {
+    spriteIndex = Math.floor(illumination / 25) + 13; // 13-15
   }
+
+  return `<div style="
+    width: ${spriteSize}px;
+    height: ${spriteSize}px;
+    background-image: url(${imagePath});
+    background-position: -${spriteIndex * spriteSize}px 0;
+    display: inline-block;
+    background-size: ${spriteSize * 15}px ${spriteSize}px;
+  "></div>`;
 }
 
 function convertTemp(celsius: number, isCelsius: boolean): number {

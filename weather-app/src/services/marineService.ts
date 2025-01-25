@@ -9,7 +9,7 @@ interface MarineResponse {
   utc_offset_seconds: number;
 }
 
-export async function fetchMarineData(lat: number, lon: number, is24Hour: boolean) {
+export async function fetchMarineData(lat: number, lon: number) {
   try {
     const response = await axios.get<MarineResponse>(
       `https://marine-api.open-meteo.com/v1/marine?` +

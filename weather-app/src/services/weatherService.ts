@@ -86,7 +86,7 @@ export async function fetchWeatherData(latitude: number, longitude: number, is24
 
     const airQualityData = await fetchAirQualityData(latitude, longitude);
     const pollenData = await fetchPollenData(latitude, longitude);
-    const marineData = await fetchMarineData(latitude, longitude, is24Hour);
+    const marineData = await fetchMarineData(latitude, longitude);
 
     // Create the weather data object
     const weatherData: WeatherData = {
