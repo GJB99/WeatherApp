@@ -14,6 +14,7 @@ import LocationSearch from './LocationSearch'
 import WindDirectionArrow from './WindDirectionArrow'
 import { isNighttime } from './timeUtils'
 import { getAQIColor } from '@/services/airQualityService'
+import Image from 'next/image'
 
 // Dynamically import MapSelector with ssr disabled
 const MapSelector = dynamic(
@@ -195,20 +196,14 @@ export default function Home() {
 
   // Add effect for updating time
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const updateTime = () => {
-      setCurrentTime(new Date().toLocaleTimeString('en-US', {
-        hour: is24Hour ? '2-digit' : 'numeric',
-        minute: '2-digit',
-        hour12: !is24Hour
-      }));
-    };
-
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, [is24Hour]);
+    if (weatherData) {
+      setCurrentTime(formatTime(new Date().toLocaleTimeString(), is24Hour));
+      const timer = setInterval(() => {
+        setCurrentTime(formatTime(new Date().toLocaleTimeString(), is24Hour));
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [weatherData, is24Hour]);
 
   useEffect(() => {
     if (!initialLoading && savedLocations.length > 0) {
@@ -662,7 +657,6 @@ function getWindDirection(degrees: number): string {
 
 function getMoonPhaseIcon(phase: string, moonIllumination: number) {
   const phaseLower = phase.toLowerCase();
-  const spriteSize = 24; // Small icon size
   
   // Map the moon phase to the actual image name
   let imageName = 'clear-night'; // default
@@ -704,10 +698,11 @@ function getMoonPhaseIcon(phase: string, moonIllumination: number) {
   return (
     <div className="flex flex-col items-center">
       <span className="text-xs opacity-70">{Math.round(moonIllumination)}%</span>
-      <img 
+      <Image 
         src={`/images/${imageName}.png`} 
         alt={`Moon phase: ${phase}`}
-        className="w-6 h-6" // 24px size
+        width={24}
+        height={24}
       />
     </div>
   );
@@ -761,7 +756,7 @@ const getMainConditionEmoji = (condition: WeatherCondition, sunriseTime?: string
     const isNight = isNighttime(currentTime, sunriseTime, sunsetTime, timezone);
 
     if ((condition === 'sunny' || condition === 'clear') && isNight) {
-      return <img src="/images/clear-night.png" alt="Clear night" className="w-6 h-6" />;
+      return <Image src="/images/clear-night.png" alt="Clear night" width={24} height={24} />;
     }
   }
 
