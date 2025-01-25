@@ -663,31 +663,42 @@ function getWindDirection(degrees: number): string {
 function getMoonPhaseIcon(phase: string, moonIllumination: number) {
   const phaseLower = phase.toLowerCase();
   const imagePath = '/images/moon-phases-cropped.png';
-  const spriteSize = 100;
+  const spriteSize = 40;
   
   let spriteIndex = 0;
   
-  // 12 moon phases with more granular illumination
   if (phaseLower.includes('new moon')) {
-    spriteIndex = 0;  // New Moon (0%)
+    spriteIndex = 12;  // new-moon.png (completely dark)
   } else if (phaseLower.includes('waxing crescent')) {
-    if (moonIllumination <= 15) spriteIndex = 1;      // Early waxing crescent (15%)
-    else if (moonIllumination <= 30) spriteIndex = 2; // Late waxing crescent (30%)
+    if (moonIllumination <= 15) {
+      spriteIndex = 1;  // moon-almost-empty
+    } else {
+      spriteIndex = 2;  // moon-crescent-almost-empty
+    }
   } else if (phaseLower.includes('first quarter')) {
-    spriteIndex = 3;  // First Quarter (50%)
+    spriteIndex = 3;  // moon-almost-half
   } else if (phaseLower.includes('waxing gibbous')) {
-    if (moonIllumination <= 65) spriteIndex = 4;      // Early waxing gibbous (65%)
-    else if (moonIllumination <= 85) spriteIndex = 5; // Late waxing gibbous (85%)
+    if (moonIllumination <= 65) {
+      spriteIndex = 4;  // moon-crescent-almost-half
+    } else {
+      spriteIndex = 5;  // moon-almost-full
+    }
   } else if (phaseLower.includes('full moon')) {
-    spriteIndex = 6;  // Full Moon (100%)
+    spriteIndex = 6;  // moon-full
   } else if (phaseLower.includes('waning gibbous')) {
-    if (moonIllumination >= 85) spriteIndex = 7;      // Early waning gibbous (85%)
-    else if (moonIllumination >= 65) spriteIndex = 8; // Late waning gibbous (65%)
+    if (moonIllumination >= 85) {
+      spriteIndex = 7;  // moon-over-half
+    } else {
+      spriteIndex = 8;  // moon-crescent-half
+    }
   } else if (phaseLower.includes('last quarter')) {
-    spriteIndex = 9;  // Last Quarter (50%)
+    spriteIndex = 9;  // moon-half
   } else if (phaseLower.includes('waning crescent')) {
-    if (moonIllumination >= 30) spriteIndex = 10;     // Early waning crescent (30%)
-    else if (moonIllumination >= 15) spriteIndex = 11; // Late waning crescent (15%)
+    if (moonIllumination >= 30) {
+      spriteIndex = 10;  // moon-crescent-quarter-empty
+    } else {
+      spriteIndex = 11;  // moon-quarter-empty
+    }
   }
 
   const style = {
