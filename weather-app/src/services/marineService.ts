@@ -13,7 +13,6 @@ interface MarineResponse {
     swell_wave_height: number[];
     swell_wave_direction: number[];
     swell_wave_period: number[];
-    water_temperature: number[];
   };
   hourly_units: {
     wave_height: string;
@@ -30,8 +29,7 @@ export async function fetchMarineData(lat: number, lon: number): Promise<SeaData
       `latitude=${lat}&longitude=${lon}` +
       `&hourly=wave_height,wave_direction,wave_period,` +
       `wind_wave_height,wind_wave_direction,wind_wave_period,` +
-      `swell_wave_height,swell_wave_direction,swell_wave_period,` +
-      `water_temperature` +
+      `swell_wave_height,swell_wave_direction,swell_wave_period` +
       `&timezone=auto`
     );
 
@@ -47,15 +45,14 @@ export async function fetchMarineData(lat: number, lon: number): Promise<SeaData
 
     if (currentIndex === -1) return undefined;
 
-    // Verify if we have valid data
-    const temperature = response.data.hourly.water_temperature[currentIndex];
+    // Verify if we have valid wave height data
     const waveHeight = response.data.hourly.wave_height[currentIndex];
 
-    // Only return data if we have at least temperature or wave height
-    if (temperature === null && waveHeight === null) return undefined;
+    // Only return data if we have wave height
+    if (waveHeight === null) return undefined;
 
     return {
-      temperature: temperature,
+      temperature: 0, // Set to 0 since it's not available
       waveHeight: waveHeight,
       waveDirection: response.data.hourly.wave_direction[currentIndex],
       wavePeriod: response.data.hourly.wave_period[currentIndex],

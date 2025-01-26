@@ -427,13 +427,9 @@ export default function Home() {
 
        <div className="grid grid-cols-2 gap-6 mb-6">
           <div className="text-center border-r border-white/20">
-            <p className="text-sm opacity-80 mb-1">Water Temperature</p>
+            <p className="text-sm opacity-80 mb-1">Wave Height</p>
             {weatherData.seaData && (
               <div className="flex flex-col gap-2">
-                <div className="flex justify-between items-center">
-                  <span>Water Temperature</span>
-                  <span>{weatherData.seaData.temperature}°C</span>
-                </div>
                 <div className="flex justify-between items-center">
                   <span>Wave Height</span>
                   <span>{weatherData.seaData.waveHeight}m</span>
@@ -442,10 +438,10 @@ export default function Home() {
             )}
           </div>
           <div className="text-center">
-            <p className="text-sm opacity-80 mb-1">Wave Height</p>
-            {weatherData.seaData?.waveHeight ? (
+            <p className="text-sm opacity-80 mb-1">Wave Direction</p>
+            {weatherData.seaData?.waveDirection ? (
               <div className="text-sm font-light">
-                <p>{weatherData.seaData.waveHeight}m</p>
+                <p>{weatherData.seaData.waveDirection}°</p>
                 <p className="text-xs opacity-70 mt-1">Current</p>
               </div>
             ) : (
@@ -507,12 +503,6 @@ export default function Home() {
         {weatherData.seaData ? (
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="col-span-2 flex justify-between mb-2">
-              <div>
-                <p className="opacity-80">Water Temperature</p>
-                <p className="text-2xl font-light">
-                  {Math.round(weatherData.seaData.temperature)}°C
-                </p>
-              </div>
               <div>
                 <p className="opacity-80">Wave Height</p>
                 <p className="text-2xl font-light">
