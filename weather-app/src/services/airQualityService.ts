@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { PollenTypeInfo } from '@/types/pollen';
 
 interface AirQualityResponse {
   current: {
