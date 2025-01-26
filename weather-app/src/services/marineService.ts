@@ -7,10 +7,13 @@ interface MarineResponse {
     wave_height: number[];
     wave_direction: number[];
     wave_period: number[];
+    wind_wave_height: number[];
+    wind_wave_direction: number[];
+    wind_wave_period: number[];
     swell_wave_height: number[];
     swell_wave_direction: number[];
     swell_wave_period: number[];
-    sea_surface_temperature: number[];
+    water_temperature: number[];
   };
   hourly_units: {
     wave_height: string;
@@ -25,7 +28,10 @@ export async function fetchMarineData(lat: number, lon: number): Promise<SeaData
     const response = await axios.get<MarineResponse>(
       `https://marine-api.open-meteo.com/v1/marine?` +
       `latitude=${lat}&longitude=${lon}` +
-      `&hourly=sea_surface_temperature,wave_height,wave_direction,wave_period,swell_wave_height,swell_wave_direction,swell_wave_period` +
+      `&hourly=wave_height,wave_direction,wave_period,` +
+      `wind_wave_height,wind_wave_direction,wind_wave_period,` +
+      `swell_wave_height,swell_wave_direction,swell_wave_period,` +
+      `water_temperature` +
       `&timezone=auto`
     );
 
@@ -42,7 +48,7 @@ export async function fetchMarineData(lat: number, lon: number): Promise<SeaData
     if (currentIndex === -1) return undefined;
 
     // Verify if we have valid data
-    const temperature = response.data.hourly.sea_surface_temperature[currentIndex];
+    const temperature = response.data.hourly.water_temperature[currentIndex];
     const waveHeight = response.data.hourly.wave_height[currentIndex];
 
     // Only return data if we have at least temperature or wave height
