@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { PollenTypeInfo } from '@/types/pollen';
 
 interface AirQualityResponse {
   current: {
@@ -96,14 +97,14 @@ export async function fetchPollenData(lat: number, lon: number) {
 
     const data = response.data.current;
 
-    const getPollenCategory = (value: number) => {
+    const getPollenCategory = (value: number): PollenTypeInfo['category'] => {
       if (value >= 50) return 'Very High';
       if (value >= 35) return 'High';
       if (value >= 20) return 'Moderate';
       return 'Low';
     };
 
-    const createPollenInfo = (value: number) => ({
+    const createPollenInfo = (value: number): PollenTypeInfo => ({
       value: value || 0,
       category: getPollenCategory(value || 0),
       inSeason: value > 0,
