@@ -412,7 +412,7 @@ export default function Home() {
             </div>
           </div>
           <div className="text-center">
-            <p className="text-sm opacity-80 mb-1">UV Index</p>
+            <p className="text-sm opacity-80 mb-1">Precipitation</p>
             <p className="text-sm font-light">
               <span className={getUVColor(weatherData.details.uvIndex)}>{weatherData.details.uvIndex}</span>
               <span className="text-white"> - {getUVDescription(weatherData.details.uvIndex)}</span>
@@ -425,46 +425,19 @@ export default function Home() {
           </div>
         </div>
 
-       <div className="grid grid-cols-2 gap-6 mb-6">
-          <div className="text-center border-r border-white/20">
-            <p className="text-sm opacity-80 mb-1">Wave Height</p>
-            {weatherData.seaData && (
-              <div className="flex flex-col gap-2">
-                <div className="flex justify-between items-center">
-                  <span>Wave Height</span>
-                  <span>{weatherData.seaData.waveHeight}m</span>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="text-center">
-            <p className="text-sm opacity-80 mb-1">Wave Direction</p>
-            {weatherData.seaData?.waveDirection ? (
-              <div className="text-sm font-light">
-                <p>{weatherData.seaData.waveDirection}°</p>
-                <p className="text-xs opacity-70 mt-1">Current</p>
-              </div>
-            ) : (
-              <p className="text-sm font-light">No data</p>
-            )}
-          </div>
-        </div>
-
         <div className="grid grid-cols-2 gap-6">
-          <div className="text-center border-r border-white/20">
-            <p className="text-sm opacity-80 mb-1">Air Quality</p>
-            <div className="text-sm font-light">
-              <p>
-                <span className={getAQIColor(weatherData.details.airQuality.aqi)}>
-                  {weatherData.details.airQuality.aqi}
+          <div className="text-center">
+              <p className="text-sm opacity-80 mb-1">UV Index</p>
+              <p className="text-sm font-light">
+                <span className={getUVColor(weatherData.details.uvIndex)}>{weatherData.details.uvIndex}</span>
+                <span className="text-white"> - {getUVDescription(weatherData.details.uvIndex)}</span>
+                <br />
+                <span className="text-xs">
+                  <span>↑{weatherData.details.maxUV}</span>
+                  <span className="opacity-70"> ↓{weatherData.details.minUV}</span>
                 </span>
-                <span className="text-white"> - {weatherData.details.airQuality.description.split(' ')[0]}</span>
-              </p>
-              <p className="text-xs opacity-70 mt-1">
-                Main pollutant: {weatherData.details.airQuality.dominantPollutant}
               </p>
             </div>
-          </div>
           <div className="text-center">
             <p className="text-sm opacity-80 mb-1">Sun</p>
             <div className="text-sm font-light flex flex-col items-center">
@@ -488,79 +461,6 @@ export default function Home() {
           )}
         </div>
 
-      </div>
-
-      {/* Debug Marine Data */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="text-xs opacity-50 mb-2">
-          Marine Data Debug: {JSON.stringify(weatherData.seaData)}
-        </div>
-      )}
-
-      {/* Marine Data Section */}
-      <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mb-6">
-        <h2 className="text-lg font-medium mb-4">Marine Conditions</h2>
-        {weatherData.seaData ? (
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="col-span-2 flex justify-between mb-2">
-              <div>
-                <p className="opacity-80">Wave Height</p>
-                <p className="text-2xl font-light">
-                  {weatherData.seaData.waveHeight.toFixed(1)}{weatherData.seaData.units.waveHeight}
-                </p>
-              </div>
-            </div>
-
-            <div className="border-t border-white/20 pt-2">
-              <p className="opacity-80">Wave Direction</p>
-              <div className="flex items-center gap-2">
-                <WindDirectionArrow 
-                  degrees={weatherData.seaData.waveDirection} 
-                  className="h-6 w-6"
-                />
-                <span>{weatherData.seaData.waveDirection}°</span>
-              </div>
-            </div>
-
-            <div className="border-t border-white/20 pt-2">
-              <p className="opacity-80">Wave Period</p>
-              <p>{weatherData.seaData.wavePeriod}s</p>
-            </div>
-
-            <div className="border-t border-white/20 pt-2">
-              <p className="opacity-80">Swell Height</p>
-              <p>{weatherData.seaData.swellHeight.toFixed(1)}{weatherData.seaData.units.waveHeight}</p>
-            </div>
-
-            <div className="border-t border-white/20 pt-2">
-              <p className="opacity-80">Swell Direction</p>
-              <div className="flex items-center gap-2">
-                <WindDirectionArrow 
-                  degrees={weatherData.seaData.swellDirection} 
-                  className="h-6 w-6"
-                />
-                <span>{weatherData.seaData.swellDirection}°</span>
-              </div>
-            </div>
-
-            <div className="border-t border-white/20 pt-2">
-              <p className="opacity-80">Swell Period</p>
-              <p>{weatherData.seaData.swellPeriod}s</p>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-4">
-            <p className="text-sm opacity-70">
-              Marine data available for coastal locations only
-            </p>
-            <button 
-              className="mt-2 text-xs opacity-50 hover:opacity-70 transition-opacity"
-              onClick={() => window.open('https://open-meteo.com/en/docs/marine-weather-api', '_blank')}
-            >
-              Learn about marine data coverage
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Hourly Forecast */}
@@ -687,6 +587,79 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Debug Marine Data */}
+            {process.env.NODE_ENV === 'development' && (
+        <div className="text-xs opacity-50 mb-2">
+          Marine Data Debug: {JSON.stringify(weatherData.seaData)}
+        </div>
+      )}
+
+      {/* Marine Data Section */}
+      <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mb-6">
+        <h2 className="text-lg font-medium mb-4">Marine Conditions</h2>
+        {weatherData.seaData ? (
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="col-span-2 flex justify-between mb-2">
+              <div>
+                <p className="opacity-80">Wave Height</p>
+                <p className="text-2xl font-light">
+                  {weatherData.seaData.waveHeight.toFixed(1)}{weatherData.seaData.units.waveHeight}
+                </p>
+              </div>
+            </div>
+
+            <div className="border-t border-white/20 pt-2">
+              <p className="opacity-80">Wave Direction</p>
+              <div className="flex items-center gap-2">
+                <WindDirectionArrow 
+                  degrees={weatherData.seaData.waveDirection} 
+                  className="h-6 w-6"
+                />
+                <span>{weatherData.seaData.waveDirection}°</span>
+              </div>
+            </div>
+
+            <div className="border-t border-white/20 pt-2">
+              <p className="opacity-80">Wave Period</p>
+              <p>{weatherData.seaData.wavePeriod}s</p>
+            </div>
+
+            <div className="border-t border-white/20 pt-2">
+              <p className="opacity-80">Swell Height</p>
+              <p>{weatherData.seaData.swellHeight.toFixed(1)}{weatherData.seaData.units.waveHeight}</p>
+            </div>
+
+            <div className="border-t border-white/20 pt-2">
+              <p className="opacity-80">Swell Direction</p>
+              <div className="flex items-center gap-2">
+                <WindDirectionArrow 
+                  degrees={weatherData.seaData.swellDirection} 
+                  className="h-6 w-6"
+                />
+                <span>{weatherData.seaData.swellDirection}°</span>
+              </div>
+            </div>
+
+            <div className="border-t border-white/20 pt-2">
+              <p className="opacity-80">Swell Period</p>
+              <p>{weatherData.seaData.swellPeriod}s</p>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-sm opacity-70">
+              Marine data available for coastal locations only
+            </p>
+            <button 
+              className="mt-2 text-xs opacity-50 hover:opacity-70 transition-opacity"
+              onClick={() => window.open('https://open-meteo.com/en/docs/marine-weather-api', '_blank')}
+            >
+              Learn about marine data coverage
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Air Quality Section */}
       <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mb-6">
