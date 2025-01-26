@@ -425,7 +425,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-6 mb-6">
+       <div className="grid grid-cols-2 gap-6 mb-6">
           <div className="text-center border-r border-white/20">
             <p className="text-sm opacity-80 mb-1">Water Temperature</p>
             {weatherData.seaData && (
@@ -493,6 +493,13 @@ export default function Home() {
         </div>
 
       </div>
+
+      {/* Debug Marine Data */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="text-xs opacity-50 mb-2">
+          Marine Data Debug: {JSON.stringify(weatherData.seaData)}
+        </div>
+      )}
 
       {/* Marine Data Section */}
       <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mb-6">

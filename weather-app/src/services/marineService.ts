@@ -29,16 +29,28 @@ export async function fetchMarineData(lat: number, lon: number): Promise<SeaData
       `&timezone=auto`
     );
 
-    // Get current hour's data using precise time matching
+    // Get current hour's data
     const now = new Date();
-    const currentTime = now.toISOString().slice(0, 13); // Get YYYY-MM-DDTHH format
-    const currentIndex = response.data.hourly.time.findIndex(t => t.startsWith(currentTime));
+    const hours = now.getHours();
+    
+    // Find the closest time in the hourly data
+    const currentIndex = response.data.hourly.time.findIndex(time => {
+      const timeHours = new Date(time).getHours();
+      return timeHours === hours;
+    });
 
     if (currentIndex === -1) return undefined;
 
+    // Verify if we have valid data
+    const temperature = response.data.hourly.sea_surface_temperature[currentIndex];
+    const waveHeight = response.data.hourly.wave_height[currentIndex];
+
+    // Only return data if we have at least temperature or wave height
+    if (temperature === null && waveHeight === null) return undefined;
+
     return {
-      temperature: response.data.hourly.sea_surface_temperature[currentIndex],
-      waveHeight: response.data.hourly.wave_height[currentIndex],
+      temperature: temperature,
+      waveHeight: waveHeight,
       waveDirection: response.data.hourly.wave_direction[currentIndex],
       wavePeriod: response.data.hourly.wave_period[currentIndex],
       swellHeight: response.data.hourly.swell_wave_height[currentIndex],
