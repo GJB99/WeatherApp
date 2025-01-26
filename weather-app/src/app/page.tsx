@@ -206,10 +206,10 @@ export default function Home() {
   }, [weatherData, is24Hour]);
 
   useEffect(() => {
-    if (!initialLoading && savedLocations.length > 0) {
+    if (!initialLoading && savedLocations.length > 0 && !weatherData) {
       loadLocation(savedLocations[0]);
     }
-  }, [initialLoading, loadLocation, savedLocations.length, is24Hour]);
+  }, [initialLoading, loadLocation, savedLocations, weatherData]);
 
   if (initialLoading) return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-gray-800 to-gray-900 text-white">
