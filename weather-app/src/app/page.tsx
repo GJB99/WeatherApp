@@ -688,6 +688,51 @@ export default function Home() {
         </div>
       )}
 
+      {/* Air Quality Section */}
+      <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mb-6">
+        <h2 className="text-lg font-medium mb-4">Air Quality</h2>
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <p className={`text-4xl font-light ${getAQIColor(weatherData.details.airQuality.aqi)}`}>
+              {weatherData.details.airQuality.aqi}
+            </p>
+            <p className="text-sm opacity-70 mt-1">{weatherData.details.airQuality.description}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm opacity-80">Main pollutant</p>
+            <p className="text-sm font-light">{weatherData.details.airQuality.dominantPollutant}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Pollen Section */}
+      <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mb-6">
+        <h2 className="text-lg font-medium mb-4">Pollen</h2>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <p className="text-sm opacity-80">Trees</p>
+            <p className="text-2xl font-light">{weatherData.details.pollen.tree.category}</p>
+            {weatherData.details.pollen.tree.inSeason && (
+              <p className="text-xs opacity-70 mt-1">In Season</p>
+            )}
+          </div>
+          <div>
+            <p className="text-sm opacity-80">Grass</p>
+            <p className="text-2xl font-light">{weatherData.details.pollen.grass.category}</p>
+            {weatherData.details.pollen.grass.inSeason && (
+              <p className="text-xs opacity-70 mt-1">In Season</p>
+            )}
+          </div>
+          <div>
+            <p className="text-sm opacity-80">Weeds</p>
+            <p className="text-2xl font-light">{weatherData.details.pollen.weed.category}</p>
+            {weatherData.details.pollen.weed.inSeason && (
+              <p className="text-xs opacity-70 mt-1">In Season</p>
+            )}
+          </div>
+        </div>
+      </div>
+
       {isMapOpen && (
         <MapSelector
           onClose={() => setIsMapOpen(false)}

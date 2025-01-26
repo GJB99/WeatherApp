@@ -1,38 +1,54 @@
 import axios from 'axios';
-import { PollenTypeInfo} from '@/types/pollen';
+import { PollenTypeInfo } from '@/types/pollen';
 
-const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+interface AirQualityResponse {
+  current: {
+    time: number;
+    european_aqi: number;
+    us_aqi: number;
+    pm10: number;
+    pm2_5: number;
+    carbon_monoxide: number;
+    nitrogen_dioxide: number;
+    sulphur_dioxide: number;
+    ozone: number;
+    dust: number;
+    alder_pollen: number;
+    birch_pollen: number;
+    grass_pollen: number;
+    mugwort_pollen: number;
+    olive_pollen: number;
+    ragweed_pollen: number;
+  };
+}
 
 export async function fetchAirQualityData(lat: number, lon: number) {
   try {
-    const response = await axios.post(
-      `https://airquality.googleapis.com/v1/currentConditions:lookup?key=${GOOGLE_API_KEY}`,
-      {
-        location: {
-          latitude: lat,
-          longitude: lon
-        }
-      }
+    const response = await axios.get<AirQualityResponse>(
+      `https://air-quality-api.open-meteo.com/v1/air-quality?` +
+      `latitude=${lat}&longitude=${lon}` +
+      `&current=european_aqi,us_aqi,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,dust`
     );
 
-    const data = response.data;
+    const data = response.data.current;
     
-    // Find the dominant pollutant
+    // Map pollutants to our existing structure
     const pollutants = {
-      co: data.pollutants?.co?.concentration || 0,
-      no2: data.pollutants?.no2?.concentration || 0,
-      o3: data.pollutants?.o3?.concentration || 0,
-      pm10: data.pollutants?.pm10?.concentration || 0,
-      pm25: data.pollutants?.pm25?.concentration || 0
+      co: data.carbon_monoxide || 0,
+      no2: data.nitrogen_dioxide || 0,
+      o3: data.ozone || 0,
+      pm10: data.pm10 || 0,
+      pm25: data.pm2_5 || 0
     };
     
+    // Find the dominant pollutant
     const dominantPollutant = Object.entries(pollutants)
       .reduce((a, b) => a[1] > b[1] ? a : b)[0]
       .toUpperCase();
 
     return {
-      aqi: data.indexes?.[0]?.aqi || 0,
-      description: data.indexes?.[0]?.category || 'Unknown',
+      aqi: data.european_aqi || 0,
+      description: getAQIDescription(data.european_aqi || 0),
       dominantPollutant,
       pollutants
     };
@@ -54,53 +70,51 @@ export async function fetchAirQualityData(lat: number, lon: number) {
 }
 
 export function getAQIDescription(aqi: number): string {
-  if (aqi >= 80) return 'Excellent';
-  if (aqi >= 60) return 'Good';
-  if (aqi >= 40) return 'Moderate';
-  if (aqi >= 20) return 'Low';
-  if (aqi >= 1) return 'Poor';
-  return 'Poor';
+  if (aqi <= 20) return 'Good';
+  if (aqi <= 40) return 'Fair';
+  if (aqi <= 60) return 'Moderate';
+  if (aqi <= 80) return 'Poor';
+  if (aqi <= 100) return 'Very Poor';
+  return 'Extremely Poor';
 }
 
 export function getAQIColor(aqi: number): string {
-  if (aqi >= 80) return 'text-green-400';   // Excellent (100-80)
-  if (aqi >= 60) return 'text-green-300';   // Good (79-60)
-  if (aqi >= 40) return 'text-yellow-300';  // Moderate (59-40)
-  if (aqi >= 20) return 'text-orange-400';  // Low (39-20)
-  if (aqi >= 1) return 'text-red-500';      // Poor (19-1)
-  return 'text-red-700';                    // Poor (0)
+  if (aqi <= 20) return 'text-green-400';   // Good
+  if (aqi <= 40) return 'text-yellow-300';  // Fair
+  if (aqi <= 60) return 'text-orange-400';  // Moderate
+  if (aqi <= 80) return 'text-red-400';     // Poor
+  if (aqi <= 100) return 'text-red-500';    // Very Poor
+  return 'text-purple-500';                 // Extremely Poor
 }
 
 export async function fetchPollenData(lat: number, lon: number) {
   try {
     const response = await axios.get(
-      `https://pollen.googleapis.com/v1/forecast:lookup?key=${GOOGLE_API_KEY}&location.latitude=${lat}&location.longitude=${lon}&days=1`
+      `https://air-quality-api.open-meteo.com/v1/air-quality?` +
+      `latitude=${lat}&longitude=${lon}` +
+      `&current=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen`
     );
 
-    console.log('Pollen response:', response.data);
+    const data = response.data.current;
 
-    if (!response.data?.dailyInfo?.[0]) {
-      console.error('No pollen data in response');
-      return null;
-    }
-
-    const dailyInfo = response.data.dailyInfo[0];
-    const pollenTypes = dailyInfo.pollenTypeInfo || [];
-    
-    const getPollenInfo = (type: string) => {
-      const info = pollenTypes.find((p: PollenTypeInfo) => p.code === type);
-      return {
-        value: info?.indexInfo?.value || 0,
-        category: info?.indexInfo?.category || 'Unknown',
-        inSeason: info?.inSeason || false,
-        recommendations: info?.healthRecommendations || []
-      };
+    const getPollenCategory = (value: number) => {
+      if (value >= 50) return 'Very High';
+      if (value >= 35) return 'High';
+      if (value >= 20) return 'Moderate';
+      return 'Low';
     };
 
+    const createPollenInfo = (value: number) => ({
+      value: value || 0,
+      category: getPollenCategory(value || 0),
+      inSeason: value > 0,
+      recommendations: []
+    });
+
     return {
-      grass: getPollenInfo('GRASS'),
-      tree: getPollenInfo('TREE'),
-      weed: getPollenInfo('WEED')
+      grass: createPollenInfo(data.grass_pollen),
+      tree: createPollenInfo(Math.max(data.birch_pollen || 0, data.alder_pollen || 0)),
+      weed: createPollenInfo(Math.max(data.mugwort_pollen || 0, data.ragweed_pollen || 0))
     };
   } catch (error) {
     console.error('Error fetching pollen data:', error);

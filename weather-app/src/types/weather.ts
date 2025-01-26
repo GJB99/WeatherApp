@@ -1,3 +1,5 @@
+import { AirQualityData, PollenData } from './pollen';
+
 export interface WeatherData {
   temperature: number;
   feelslike: number;
@@ -24,38 +26,8 @@ export interface WeatherData {
     minUV: number;
     rainChance: number;
     humidity: number;
-    airQuality: {
-      aqi: number;
-      description: string;
-      dominantPollutant: string;
-      pollutants: {
-        co: number;
-        no2: number;
-        o3: number;
-        pm10: number;
-        pm25: number;
-      };
-    };
-    pollen: {
-      grass: {
-        value: number;
-        category: string;
-        inSeason: boolean;
-        recommendations: string[];
-      };
-      tree: {
-        value: number;
-        category: string;
-        inSeason: boolean;
-        recommendations: string[];
-      };
-      weed: {
-        value: number;
-        category: string;
-        inSeason: boolean;
-        recommendations: string[];
-      };
-    };
+    airQuality: AirQualityData;
+    pollen: PollenData;
   };
   tomorrowForecast: {
     high: number;
