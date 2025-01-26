@@ -1,54 +1,44 @@
-import axios from 'axios';
+import { fetchWeatherApi } from 'openmeteo';
 import { PollenTypeInfo } from '@/types/pollen';
-
-interface AirQualityResponse {
-  current: {
-    time: number;
-    european_aqi: number;
-    us_aqi: number;
-    pm10: number;
-    pm2_5: number;
-    carbon_monoxide: number;
-    nitrogen_dioxide: number;
-    sulphur_dioxide: number;
-    ozone: number;
-    dust: number;
-    alder_pollen: number;
-    birch_pollen: number;
-    grass_pollen: number;
-    mugwort_pollen: number;
-    olive_pollen: number;
-    ragweed_pollen: number;
-  };
-}
 
 export async function fetchAirQualityData(lat: number, lon: number) {
   try {
-    const response = await axios.get<AirQualityResponse>(
-      `https://air-quality-api.open-meteo.com/v1/air-quality?` +
-      `latitude=${lat}&longitude=${lon}` +
-      `&current=european_aqi,us_aqi,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,dust`
-    );
-
-    const data = response.data.current;
-    
-    // Map pollutants to our existing structure
-    const pollutants = {
-      co: data.carbon_monoxide || 0,
-      no2: data.nitrogen_dioxide || 0,
-      o3: data.ozone || 0,
-      pm10: data.pm10 || 0,
-      pm25: data.pm2_5 || 0
+    const params = {
+      latitude: lat,
+      longitude: lon,
+      current: ["european_aqi", "us_aqi", "pm10", "pm2_5", "carbon_monoxide", "nitrogen_dioxide", "sulphur_dioxide", "ozone"],
+      forecast_days: 1
     };
     
+    const responses = await fetchWeatherApi("https://air-quality-api.open-meteo.com/v1/air-quality", params);
+    const response = responses[0];
+    const current = response.current()!;
+
+    // Map the indices to their respective values
+    const europeanAqi = current.variables(0)?.value() || 0;
+    const pm10 = current.variables(2)?.value() || 0;
+    const pm25 = current.variables(3)?.value() || 0;
+    const co = current.variables(4)?.value() || 0;
+    const no2 = current.variables(5)?.value() || 0;
+    const so2 = current.variables(6)?.value() || 0;
+    const o3 = current.variables(7)?.value() || 0;
+
+    const pollutants = {
+      co,
+      no2,
+      o3,
+      pm10,
+      pm25
+    };
+
     // Find the dominant pollutant
     const dominantPollutant = Object.entries(pollutants)
       .reduce((a, b) => a[1] > b[1] ? a : b)[0]
       .toUpperCase();
 
     return {
-      aqi: data.european_aqi || 0,
-      description: getAQIDescription(data.european_aqi || 0),
+      aqi: europeanAqi,
+      description: getAQIDescription(europeanAqi),
       dominantPollutant,
       pollutants
     };
@@ -69,6 +59,55 @@ export async function fetchAirQualityData(lat: number, lon: number) {
   }
 }
 
+export async function fetchPollenData(lat: number, lon: number) {
+  try {
+    const params = {
+      latitude: lat,
+      longitude: lon,
+      current: ["alder_pollen", "birch_pollen", "grass_pollen", "mugwort_pollen", "olive_pollen", "ragweed_pollen"],
+      forecast_days: 1
+    };
+    
+    const responses = await fetchWeatherApi("https://air-quality-api.open-meteo.com/v1/air-quality", params);
+    const response = responses[0];
+    const current = response.current()!;
+
+    const getPollenCategory = (value: number): PollenTypeInfo['category'] => {
+      if (value >= 50) return 'Very High';
+      if (value >= 35) return 'High';
+      if (value >= 20) return 'Moderate';
+      return 'Low';
+    };
+
+    const createPollenInfo = (value: number): PollenTypeInfo => ({
+      value: value || 0,
+      category: getPollenCategory(value || 0),
+      inSeason: value > 0,
+      recommendations: []
+    });
+
+    // Map the indices to their respective values
+    const alderPollen = current.variables(0)?.value() || 0;
+    const birchPollen = current.variables(1)?.value() || 0;
+    const grassPollen = current.variables(2)?.value() || 0;
+    const mugwortPollen = current.variables(3)?.value() || 0;
+    const ragweedPollen = current.variables(5)?.value() || 0;
+
+    return {
+      grass: createPollenInfo(grassPollen),
+      tree: createPollenInfo(Math.max(alderPollen, birchPollen)),
+      weed: createPollenInfo(Math.max(mugwortPollen, ragweedPollen))
+    };
+  } catch (error) {
+    console.error('Error fetching pollen data:', error);
+    return {
+      grass: { value: 0, category: 'Low' as const, inSeason: false, recommendations: [] },
+      tree: { value: 0, category: 'Low' as const, inSeason: false, recommendations: [] },
+      weed: { value: 0, category: 'Low' as const, inSeason: false, recommendations: [] }
+    };
+  }
+}
+
 export function getAQIDescription(aqi: number): string {
   if (aqi <= 20) return 'Good';
   if (aqi <= 40) return 'Fair';
@@ -85,43 +124,4 @@ export function getAQIColor(aqi: number): string {
   if (aqi <= 80) return 'text-red-400';     // Poor
   if (aqi <= 100) return 'text-red-500';    // Very Poor
   return 'text-purple-500';                 // Extremely Poor
-}
-
-export async function fetchPollenData(lat: number, lon: number) {
-  try {
-    const response = await axios.get(
-      `https://air-quality-api.open-meteo.com/v1/air-quality?` +
-      `latitude=${lat}&longitude=${lon}` +
-      `&current=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen`
-    );
-
-    const data = response.data.current;
-
-    const getPollenCategory = (value: number): PollenTypeInfo['category'] => {
-      if (value >= 50) return 'Very High';
-      if (value >= 35) return 'High';
-      if (value >= 20) return 'Moderate';
-      return 'Low';
-    };
-
-    const createPollenInfo = (value: number): PollenTypeInfo => ({
-      value: value || 0,
-      category: getPollenCategory(value || 0),
-      inSeason: value > 0,
-      recommendations: []
-    });
-
-    return {
-      grass: createPollenInfo(data.grass_pollen),
-      tree: createPollenInfo(Math.max(data.birch_pollen || 0, data.alder_pollen || 0)),
-      weed: createPollenInfo(Math.max(data.mugwort_pollen || 0, data.ragweed_pollen || 0))
-    };
-  } catch (error) {
-    console.error('Error fetching pollen data:', error);
-    return {
-      grass: { value: 0, category: 'Unknown', inSeason: false, recommendations: [] },
-      tree: { value: 0, category: 'Unknown', inSeason: false, recommendations: [] },
-      weed: { value: 0, category: 'Unknown', inSeason: false, recommendations: [] }
-    };
-  }
 }
