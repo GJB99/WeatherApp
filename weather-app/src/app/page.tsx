@@ -588,28 +588,23 @@ export default function Home() {
         </div>
       )}
 
-      {/* Debug Marine Data */}
-            {process.env.NODE_ENV === 'development' && (
-        <div className="text-xs opacity-50 mb-2">
-          Marine Data Debug: {JSON.stringify(weatherData.seaData)}
-        </div>
-      )}
-
       {/* Marine Data Section */}
-      <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mb-6">
+      <div className="bg-white/20 backdrop-blur-lg rounded-3xl p-6 w-full max-w-md mb-6 mt-6">
         <h2 className="text-lg font-medium mb-4">Marine Conditions</h2>
         {weatherData.seaData ? (
           <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="col-span-2 flex justify-between mb-2">
-              <div>
-                <p className="opacity-80">Wave Height</p>
-                <p className="text-2xl font-light">
-                  {weatherData.seaData.waveHeight.toFixed(1)}{weatherData.seaData.units.waveHeight}
-                </p>
-              </div>
+            <div>
+              <p className="opacity-80">Wave Height</p>
+              <p className="text-2xl font-light">
+                {weatherData.seaData.waveHeight.toFixed(1)}{weatherData.seaData.units.waveHeight}
+              </p>
+            </div>
+            <div>
+              <p className="opacity-80">Wave Period</p>
+              <p className="text-2xl font-light">{weatherData.seaData.wavePeriod}s</p>
             </div>
 
-            <div className="border-t border-white/20 pt-2">
+            <div className="border-t border-white/20 pt-4">
               <p className="opacity-80">Wave Direction</p>
               <div className="flex items-center gap-2">
                 <WindDirectionArrow 
@@ -620,17 +615,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="border-t border-white/20 pt-2">
-              <p className="opacity-80">Wave Period</p>
-              <p>{weatherData.seaData.wavePeriod}s</p>
-            </div>
-
-            <div className="border-t border-white/20 pt-2">
-              <p className="opacity-80">Swell Height</p>
-              <p>{weatherData.seaData.swellHeight.toFixed(1)}{weatherData.seaData.units.waveHeight}</p>
-            </div>
-
-            <div className="border-t border-white/20 pt-2">
+            <div className="border-t border-white/20 pt-4">
               <p className="opacity-80">Swell Direction</p>
               <div className="flex items-center gap-2">
                 <WindDirectionArrow 
@@ -641,7 +626,12 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="border-t border-white/20 pt-2">
+            <div className="border-t border-white/20 pt-4">
+              <p className="opacity-80">Swell Height</p>
+              <p>{weatherData.seaData.swellHeight.toFixed(1)}{weatherData.seaData.units.waveHeight}</p>
+            </div>
+
+            <div className="border-t border-white/20 pt-4">
               <p className="opacity-80">Swell Period</p>
               <p>{weatherData.seaData.swellPeriod}s</p>
             </div>
