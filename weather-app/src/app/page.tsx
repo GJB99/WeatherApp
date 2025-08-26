@@ -414,13 +414,8 @@ export default function Home() {
           <div className="text-center">
             <p className="text-sm opacity-80 mb-1">Precipitation</p>
             <p className="text-sm font-light">
-              <span className={getUVColor(weatherData.details.uvIndex)}>{weatherData.details.uvIndex}</span>
-              <span className="text-white"> - {getUVDescription(weatherData.details.uvIndex)}</span>
-              <br />
-              <span className="text-xs">
-                <span>↑{weatherData.details.maxUV}</span>
-                <span className="opacity-70"> ↓{weatherData.details.minUV}</span>
-              </span>
+              <span>{weatherData.details.rainChance}%</span>
+              <span> - {getRainDescription(weatherData.details.rainChance)}</span>
             </p>
           </div>
         </div>
